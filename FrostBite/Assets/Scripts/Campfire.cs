@@ -7,9 +7,9 @@ public class Campfire : MonoBehaviour
     [SerializeField] float radius = 5f;
     [SerializeField] float burnTime = 20f;
     [SerializeField] float warmRate = 3f;
-    [SerializeField] float calmRate = 1.5f;
-    [SerializeField] float coldFloor = 20f;
-    [SerializeField] float stressFloor = 15f;
+    [SerializeField] float calmRate = 3.5f;
+    [SerializeField] float coldFloor = 0f;
+    [SerializeField] float stressFloor = 0f;
 
     PlayerStat stat;
     float left;
@@ -17,6 +17,7 @@ public class Campfire : MonoBehaviour
     float drop;
     bool near;
     bool lit;
+    bool used;
 
     public float Radius => radius;
     public float Left => left;
@@ -43,19 +44,25 @@ public class Campfire : MonoBehaviour
 
         if (!lit || !near || stat.Dead) return;
 
-        left -= Time.deltaTime;
+        used = false;
 
         if (stat.Cold > coldFloor)
         {
             drop = Mathf.Min(warmRate * Time.deltaTime, stat.Cold - coldFloor);
             stat.Warm(drop);
+            used = true;
         }
 
         if (stat.Stress > stressFloor)
         {
             drop = Mathf.Min(calmRate * Time.deltaTime, stat.Stress - stressFloor);
             stat.Calm(drop);
+            used = true;
         }
+
+        if (!used) return;
+
+        left -= Time.deltaTime;
 
         if (left <= 0f) Out();
     }

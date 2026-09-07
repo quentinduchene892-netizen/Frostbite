@@ -13,6 +13,7 @@ public class WolfTrap : MonoBehaviour
     [Header("Options")]
     [Tooltip("Tag utilisé pour identifier le joueur")]
     [SerializeField] private string playerTag = "Player";
+    [SerializeField] private float stressOnTrap = 20f;
 
     private bool playerTrapped = false;
     private GameObject trappedPlayer;
@@ -33,6 +34,8 @@ public class WolfTrap : MonoBehaviour
     {
         playerTrapped = true;
         trappedPlayer = player;
+
+        if (PlayerStat.Instance != null) PlayerStat.Instance.AddStress(stressOnTrap);
 
         var cameraPlayer = player.GetComponent<CameraPlayer>();
         if (cameraPlayer != null) cameraPlayer.SetTrapped(true);

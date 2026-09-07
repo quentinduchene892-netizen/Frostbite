@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [DisallowMultipleComponent]
 public class PlayerStat : MonoBehaviour
@@ -16,14 +17,19 @@ public class PlayerStat : MonoBehaviour
     [SerializeField] float coldPoint = 50f;
     [SerializeField] float slowFloor = 0.55f;
     [SerializeField] float coldRatio = 1.5f;
+    [SerializeField] float coldStress = 1f;
     [SerializeField] float faintTime = 4f;
     [SerializeField] float freezeHit = 8f;
+    [SerializeField] float deathDelay = 2f;
 
+    float deathLeft;
     float mult;
     float over;
     float slow;
     bool fainted;
+    bool frozen;
     bool dead;
+    bool reloading;
 
     public float Life => life;
     public float Stress => stress;
@@ -33,7 +39,13 @@ public class PlayerStat : MonoBehaviour
     public float ColdPart => cold / maxCold;
     public float Slow => slow;
     public bool Fainted => fainted;
+    public bool Frozen => frozen;
     public bool Dead => dead;
+
+    public string Cause => fainted && frozen ? "Vous vous êtes évanoui et vous êtes mort de froid."
+        : fainted ? "Vous vous êtes évanoui."
+        : frozen ? "Vous êtes mort de froid."
+        : "Vous êtes mort.";
 
     void Awake()
     {
@@ -49,20 +61,35 @@ public class PlayerStat : MonoBehaviour
 
     void Update()
     {
-        if (dead) return;
+        if (dead)
+        {
+            if (reloading) return;
 
-        cold = Mathf.Clamp(cold + coldRate * Time.deltaTime, 0f, maxCold);
-        stress = Mathf.Clamp(stress - calmRate * Time.deltaTime, 0f, maxStress);
+            deathLeft -= Time.deltaTime;
 
-        if (cold >= maxCold) Hurt(freezeHit * Time.deltaTime);
+            if (deathLeft > 0f) return;
+
+            reloading = true;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            return;
+        }
 
         if (!fainted && stress >= maxStress) fainted = true;
+
+        cold = Mathf.Clamp(cold + coldRate * Time.deltaTime, 0f, maxCold);
+        over = Mathf.InverseLerp(coldPoint, maxCold, cold);
+        stress = Mathf.Clamp(stress + (coldStress * over - calmRate) * Time.deltaTime, 0f, maxStress);
+
+        if (cold >= maxCold)
+        {
+            frozen = true;
+            Hurt(freezeHit * Time.deltaTime);
+        }
 
         if (fainted) Hurt(maxLife / Mathf.Max(faintTime, 0.01f) * Time.deltaTime);
 
         if (dead) return;
 
-        over = Mathf.InverseLerp(coldPoint, maxCold, cold);
         slow = fainted ? 0f : Mathf.Lerp(1f, slowFloor, over);
     }
 
@@ -121,12 +148,16 @@ public class PlayerStat : MonoBehaviour
         cold = 0f;
         slow = 1f;
         fainted = false;
+        frozen = false;
         dead = false;
+        reloading = false;
+        deathLeft = 0f;
     }
 
     void Die()
     {
         dead = true;
         slow = 0f;
+        deathLeft = deathDelay;
     }
 }

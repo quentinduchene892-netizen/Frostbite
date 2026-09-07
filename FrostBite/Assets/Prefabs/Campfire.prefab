@@ -147,9 +147,9 @@ MonoBehaviour:
   radius: 5
   burnTime: 20
   warmRate: 3
-  calmRate: 1.5
-  coldFloor: 20
-  stressFloor: 15
+  calmRate: 3.5
+  coldFloor: 0
+  stressFloor: 0
 --- !u!1 &7622829805435291921
 GameObject:
   m_ObjectHideFlags: 0
