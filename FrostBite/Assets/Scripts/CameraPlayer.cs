@@ -69,9 +69,11 @@ public class CameraPlayer : MonoBehaviour
     bool running;
     bool down;
     bool onGround;
+    bool trapped; // true quand le joueur est coincé (ex: piège à loup) : bloque le déplacement
 
     public float Speed => velocity.magnitude;
     public bool Running => running;
+    public bool Trapped => trapped;
 
     void Awake()
     {
@@ -119,6 +121,15 @@ public class CameraPlayer : MonoBehaviour
         Shake();
     }
 
+    /// <summary>
+    /// Appelée par un piège (ex: WolfTrap) pour bloquer ou libérer le déplacement du joueur.
+    /// La caméra/regard reste utilisable même piégé.
+    /// </summary>
+    public void SetTrapped(bool value)
+    {
+        trapped = value;
+    }
+
     void Turn()
     {
         if (down || input == null || panTilt == null) return;
@@ -137,12 +148,12 @@ public class CameraPlayer : MonoBehaviour
 
     void Walk()
     {
-        move = input != null && !down ? input.Move : Vector2.zero;
+        move = input != null && !down && !trapped ? input.Move : Vector2.zero;
         way = transform.right * move.x + transform.forward * move.y;
 
         if (way.sqrMagnitude > 1f) way.Normalize();
 
-        running = input != null && !down && input.Run && move.y > runThreshold;
+        running = input != null && !down && !trapped && input.Run && move.y > runThreshold;
         slow = stat != null ? stat.Slow : 1f;
         topSpeed = (running ? runSpeed : speed) * slow;
 

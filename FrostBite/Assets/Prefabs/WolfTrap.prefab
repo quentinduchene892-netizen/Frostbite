@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7537738161112564834}
   - component: {fileID: 1103016998586065527}
+  - component: {fileID: 7391232647863051799}
   m_Layer: 0
   m_Name: WolfTrap
   m_TagString: Untagged
@@ -47,6 +48,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WolfTrap
   hud: {fileID: 0}
   playerTag: Player
+--- !u!65 &7391232647863051799
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6014537566365986878}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.19007039, y: 0.61124563, z: 0.16864657}
+  m_Center: {x: 0.043649316, y: 0.18186104, z: -0.017224193}
 --- !u!1 &6048011044971703555
 GameObject:
   m_ObjectHideFlags: 0
@@ -58,7 +80,6 @@ GameObject:
   - component: {fileID: 6801183626199417219}
   - component: {fileID: 7983241820056916364}
   - component: {fileID: 2549984637258255794}
-  - component: {fileID: 6480642937700655530}
   m_Layer: 0
   m_Name: Model
   m_TagString: WolfTrap
@@ -75,7 +96,7 @@ Transform:
   m_GameObject: {fileID: 6048011044971703555}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.53, y: 0.102, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 0.2325594, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -138,24 +159,3 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &6480642937700655530
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6048011044971703555}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}

@@ -56,8 +56,8 @@ public class HUD : MonoBehaviour
         // La jauge descend en permanence, comme dans un QTE classique
         currentProgress -= drainSpeed * Time.deltaTime;
 
-        // Chaque appui (et non maintien) sur E ajoute un coup de boost aléatoire
-        if (Input.GetKeyDown(KeyCode.E))
+        // Chaque appui (et non maintien) sur l'action WolfTrap ajoute un coup de boost aléatoire
+        if (InputManager.Instance != null && InputManager.Instance.WolfTrapPressed)
         {
             currentProgress += Random.Range(fillPerPressMin, fillPerPressMax);
         }
