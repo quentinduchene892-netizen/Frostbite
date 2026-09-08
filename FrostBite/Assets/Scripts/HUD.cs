@@ -20,40 +20,51 @@ public class HUD : MonoBehaviour
     [SerializeField] private TMP_Text stressValue;
     [SerializeField] private TMP_Text coldValue;
     [SerializeField] private float ghostSpeed = 0.3f;
-
-    [Header("Wolf Trap Progress Bar")]
+    [SerializeField] private CampfireCraft craft;
+    [SerializeField] private Image craftBar;
+    [SerializeField] private TMP_Text woodValue;
+    [SerializeField] private WoodGather gather;
+    [SerializeField] private Image pickupBar;
+    [SerializeField] private Image crosshair;
+    [SerializeField] private Color aimIdle = new Color(1f, 1f, 1f, 0.32f);
+    [SerializeField] private Color aimReady = new Color(1f, 0.70f, 0.34f, 0.90f);
     [SerializeField] private Image progressBarWolfTrap;
-    [SerializeField] private float startProgress = 0.3f; // valeur de départ quand le QTE se déclenche
-    [SerializeField] private float maxProgressBarWolfTrapProgress = 1f; // Valeur par défaut
-    [SerializeField] private float fillPerPressMin = 0.08f; // gain minimum ajouté à chaque appui sur E
-    [SerializeField] private float fillPerPressMax = 0.2f;  // gain maximum ajouté à chaque appui sur E
-    [SerializeField] private float drainSpeed = 0.3f;    // vitesse de descente automatique (continue)
+    [SerializeField] private float startProgress = 0.3f;
+    [SerializeField] private float maxProgressBarWolfTrapProgress = 1f;
+    [SerializeField] private float fillPerPressMin = 0.08f;
+    [SerializeField] private float fillPerPressMax = 0.2f;
+    [SerializeField] private float drainSpeed = 0.3f;
 
-    [Header("Déclencheur")]
-    [Tooltip("Passe à true (par un autre script, un event, un trigger...) pour lancer le QTE de la jauge")]
     public bool isWolfTrapTriggered = false;
+    public bool isWolfTrapActivated = false;
 
     private float stressGhostPart;
     private float coldGhostPart;
-    private bool isRunning = false; // le QTE est en cours d'exécution
-    private float currentProgress = 0f;
-    public bool isWolfTrapActivated = false;
+    private float currentProgress;
+    private float stressPart;
+    private float coldPart;
+    private bool isRunning;
+    private bool showBar;
+    private bool showDeath;
+    private Vector2 edge;
 
     void Start()
     {
+        if (craft == null) craft = FindFirstObjectByType<CampfireCraft>();
+        if (gather == null) gather = FindFirstObjectByType<WoodGather>();
+
         if (progressBarWolfTrap == null)
         {
-            Debug.LogError("progressBarWolfTrap n'est pas assignée dans l'Inspector !");
+            Debug.LogError("progressBarWolfTrap n'est pas assignÃ©e dans l'inspecteur.", this);
             return;
         }
 
-        if (maxProgressBarWolfTrapProgress <= 0)
+        if (maxProgressBarWolfTrapProgress <= 0f)
         {
-            Debug.LogWarning("maxProgressBarWolfTrapProgress doit être > 0");
+            Debug.LogWarning("maxProgressBarWolfTrapProgress doit Ãªtre supÃ©rieur Ã  zÃ©ro.", this);
             maxProgressBarWolfTrapProgress = 1f;
         }
 
-        // La barre reste cachée tant que le QTE n'a pas été déclenché
         progressBarWolfTrap.gameObject.SetActive(false);
 
         if (alertText != null) alertText.SetActive(false);
@@ -64,6 +75,7 @@ public class HUD : MonoBehaviour
         if (alertText != null && alertText.activeSelf != isRunning) alertText.SetActive(isRunning);
 
         UpdateStatBars();
+        UpdateCraft();
         UpdateDeathScreen();
 
         if (PlayerStat.Instance != null && (PlayerStat.Instance.Fainted || PlayerStat.Instance.Dead))
@@ -72,48 +84,33 @@ public class HUD : MonoBehaviour
             return;
         }
 
-        if (progressBarWolfTrap == null)
-            return;
+        if (progressBarWolfTrap == null) return;
 
-        // On surveille le déclencheur (bool assigné depuis l'extérieur, ou event plus tard)
-        // Dès qu'il est lu, on le "consomme" (remis à false) pour pouvoir le redéclencher plus tard
         if (isWolfTrapTriggered && !isRunning)
         {
             isWolfTrapTriggered = false;
             StartWolfTrapQTE();
         }
 
-        if (!isRunning)
-            return;
+        if (!isRunning) return;
 
-        // La jauge descend en permanence, comme dans un QTE classique
         currentProgress -= drainSpeed * Time.deltaTime;
 
-        // Chaque appui (et non maintien) sur l'action WolfTrap ajoute un coup de boost aléatoire
         if (InputManager.Instance != null && InputManager.Instance.WolfTrapPressed)
-        {
             currentProgress += Random.Range(fillPerPressMin, fillPerPressMax);
-        }
 
         currentProgress = Mathf.Clamp(currentProgress, 0f, maxProgressBarWolfTrapProgress);
 
         UpdateProgressBar();
 
-        // Vérifier si la jauge est complète
-        if (currentProgress >= maxProgressBarWolfTrapProgress)
-        {
-            isWolfTrapActivated = true;
-            isRunning = false;
-            progressBarWolfTrap.gameObject.SetActive(false);
-            OnWolfTrapActivated();
-        }
+        if (currentProgress < maxProgressBarWolfTrapProgress) return;
+
+        isWolfTrapActivated = true;
+        isRunning = false;
+        progressBarWolfTrap.gameObject.SetActive(false);
+        OnWolfTrapActivated();
     }
 
-    /// <summary>
-    /// Lance le QTE : affiche la jauge et la fait démarrer à startProgress.
-    /// Appelée automatiquement quand isWolfTrapTriggered passe à true,
-    /// mais peut aussi être appelée directement par un autre script/event.
-    /// </summary>
     public void StartWolfTrapQTE()
     {
         currentProgress = startProgress;
@@ -125,21 +122,55 @@ public class HUD : MonoBehaviour
 
     private void UpdateProgressBar()
     {
-        if (progressBarWolfTrap != null && maxProgressBarWolfTrapProgress > 0)
-        {
-            progressBarWolfTrap.fillAmount = currentProgress / maxProgressBarWolfTrapProgress;
-        }
+        if (progressBarWolfTrap == null || maxProgressBarWolfTrapProgress <= 0f) return;
+
+        progressBarWolfTrap.fillAmount = currentProgress / maxProgressBarWolfTrapProgress;
+    }
+
+    private void UpdateStatBars()
+    {
+        if (PlayerStat.Instance == null) return;
+
+        stressPart = PlayerStat.Instance.StressPart;
+        coldPart = PlayerStat.Instance.ColdPart;
+
+        if (stressBar != null) stressBar.value = stressPart;
+        if (coldBar != null) coldBar.value = coldPart;
+
+        if (stressFill != null) stressFill.color = Color.Lerp(stressLow, stressHigh, stressPart);
+        if (coldFill != null) coldFill.color = Color.Lerp(coldLow, coldHigh, coldPart);
+
+        stressGhostPart = TrailTowards(stressGhostPart, stressPart);
+        coldGhostPart = TrailTowards(coldGhostPart, coldPart);
+
+        SetGhost(stressGhost, stressGhostPart);
+        SetGhost(coldGhost, coldGhostPart);
+
+        if (stressValue != null) stressValue.text = Mathf.RoundToInt(stressPart * 100f).ToString();
+        if (coldValue != null) coldValue.text = Mathf.RoundToInt(coldPart * 100f).ToString();
+    }
+
+    private void UpdateCraft()
+    {
+        if (woodValue != null && Inventory.Instance != null)
+            woodValue.text = Inventory.Instance.Wood.ToString();
+
+        if (crosshair != null)
+            crosshair.color = craft != null && craft.Ready ? aimReady : aimIdle;
+
+        Fill(craftBar, craft == null ? 0f : craft.Progress);
+        Fill(pickupBar, gather == null ? 0f : gather.Progress);
     }
 
     private void UpdateDeathScreen()
     {
         if (deathScreen == null || PlayerStat.Instance == null) return;
 
-        bool show = PlayerStat.Instance.Fainted || PlayerStat.Instance.Dead;
+        showDeath = PlayerStat.Instance.Fainted || PlayerStat.Instance.Dead;
 
-        if (deathScreen.activeSelf != show) deathScreen.SetActive(show);
+        if (deathScreen.activeSelf != showDeath) deathScreen.SetActive(showDeath);
 
-        if (show && deathText != null) deathText.text = PlayerStat.Instance.Cause;
+        if (showDeath && deathText != null) deathText.text = PlayerStat.Instance.Cause;
     }
 
     private void StopWolfTrapQTE()
@@ -162,38 +193,26 @@ public class HUD : MonoBehaviour
     {
         if (ghost == null) return;
 
-        Vector2 max = ghost.anchorMax;
-        max.x = part;
-        ghost.anchorMax = max;
+        edge = ghost.anchorMax;
+        edge.x = part;
+        ghost.anchorMax = edge;
         ghost.offsetMin = Vector2.zero;
         ghost.offsetMax = Vector2.zero;
     }
 
-    private void UpdateStatBars()
+    private void Fill(Image bar, float part)
     {
-        if (PlayerStat.Instance == null) return;
+        if (bar == null) return;
 
-        float stressPart = PlayerStat.Instance.StressPart;
-        float coldPart = PlayerStat.Instance.ColdPart;
+        showBar = part > 0.001f;
 
-        if (stressBar != null) stressBar.value = stressPart;
-        if (coldBar != null) coldBar.value = coldPart;
+        if (bar.gameObject.activeSelf != showBar) bar.gameObject.SetActive(showBar);
 
-        if (stressFill != null) stressFill.color = Color.Lerp(stressLow, stressHigh, stressPart);
-        if (coldFill != null) coldFill.color = Color.Lerp(coldLow, coldHigh, coldPart);
-
-        stressGhostPart = TrailTowards(stressGhostPart, stressPart);
-        coldGhostPart = TrailTowards(coldGhostPart, coldPart);
-
-        SetGhost(stressGhost, stressGhostPart);
-        SetGhost(coldGhost, coldGhostPart);
-
-        if (stressValue != null) stressValue.text = Mathf.RoundToInt(stressPart * 100f).ToString();
-        if (coldValue != null) coldValue.text = Mathf.RoundToInt(coldPart * 100f).ToString();
+        bar.fillAmount = part;
     }
 
     private void OnWolfTrapActivated()
     {
-        Debug.Log("Wolf Trap Activated!");
+        Debug.Log("Wolf Trap activÃ©.");
     }
 }

@@ -12,6 +12,9 @@ GameObject:
   - component: {fileID: 142467757807269064}
   - component: {fileID: 8681800783107664290}
   - component: {fileID: 3985843512759883672}
+  - component: {fileID: 4057843715335324704}
+  - component: {fileID: 6177436797677242013}
+  - component: {fileID: 93062687781029896}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -84,6 +87,10 @@ MonoBehaviour:
   gravity: -20
   groundPull: -2
   runThreshold: 0.1
+  sprintTime: 6
+  restRate: 0.5
+  restWait: 1
+  restNeed: 1.5
   mouse: 0.12
   stick: 180
   minAngle: -80
@@ -129,8 +136,64 @@ MonoBehaviour:
   coldPoint: 50
   slowFloor: 0.55
   coldRatio: 1.5
+  coldStress: 1
   faintTime: 4
   freezeHit: 8
+  deathDelay: 2
+--- !u!114 &4057843715335324704
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 31641029782447786}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68c8e11552684ed4abdb7b9d7b301915, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Inventory
+  wood: 0
+--- !u!114 &6177436797677242013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 31641029782447786}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f403cac238c2db479d5569c3de57be0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WoodGather
+  gatherTime: 0.9
+  dropSpeed: 2.5
+--- !u!114 &93062687781029896
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 31641029782447786}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a66bd33f15a8361448d3d6f96e9eac3b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CampfireCraft
+  firePrefab: {fileID: 5984663058696540252, guid: a0ff432aa89a1124ba938ba99f3deebd, type: 3}
+  ghost: {fileID: 0}
+  ghostPrefab: {fileID: 1008567691305175348, guid: ab9e21871fef44c4795e941524d26dbf, type: 3}
+  view: {fileID: 0}
+  woodCost: 2
+  buildTime: 2.5
+  dropSpeed: 1.5
+  range: 3.5
+  dropHeight: 3
+  flatEnough: 0.7
+  lift: 0.02
+  nose: 0.35
+  ground:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &3682699508411479624
 GameObject:
   m_ObjectHideFlags: 0

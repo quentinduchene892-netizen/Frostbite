@@ -28,6 +28,7 @@ public class PlayerStat : MonoBehaviour
     float slow;
     bool fainted;
     bool frozen;
+    bool shot;
     bool dead;
     bool reloading;
 
@@ -40,9 +41,11 @@ public class PlayerStat : MonoBehaviour
     public float Slow => slow;
     public bool Fainted => fainted;
     public bool Frozen => frozen;
+    public bool Shot => shot;
     public bool Dead => dead;
 
-    public string Cause => fainted && frozen ? "Vous vous êtes évanoui et vous êtes mort de froid."
+    public string Cause => shot ? "Vous avez été tué par balle."
+        : fainted && frozen ? "Vous vous êtes évanoui et vous êtes mort de froid."
         : fainted ? "Vous vous êtes évanoui."
         : frozen ? "Vous êtes mort de froid."
         : "Vous êtes mort.";
@@ -125,6 +128,14 @@ public class PlayerStat : MonoBehaviour
         Calm(calm);
     }
 
+    public void Gunshot()
+    {
+        if (dead) return;
+
+        shot = true;
+        Hurt(maxLife);
+    }
+
     public void Hurt(float amount)
     {
         if (dead) return;
@@ -149,6 +160,7 @@ public class PlayerStat : MonoBehaviour
         slow = 1f;
         fainted = false;
         frozen = false;
+        shot = false;
         dead = false;
         reloading = false;
         deathLeft = 0f;

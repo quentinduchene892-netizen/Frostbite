@@ -49,3 +49,6 @@ MonoBehaviour:
   moveName: Move
   lookName: Look
   runName: Sprint
+  takeName: Interact
+  craftKey: <Keyboard>/#(a)
+  wolfTrap: QTE

@@ -1,17 +1,22 @@
 using UnityEngine;
 
+[DisallowMultipleComponent]
 public class Bullet : MonoBehaviour
 {
-    [Header("Réglages")]
-    [SerializeField] private float speed = 40f;
-    [SerializeField] private float lifeTime = 5f; // se détruit toute seule après ce délai (évite les balles perdues)
+    [SerializeField] GameObject impactPrefab;
+    [SerializeField] string playerTag = "Player";
+    [SerializeField] float speed = 220f;
+    [SerializeField] float lifeTime = 5f;
+    [SerializeField] float whizRange = 3.5f;
+    [SerializeField] float whizKick = 0.6f;
+    [SerializeField] float hitKick = 1f;
 
-    private Vector3 direction = Vector3.forward;
+    CameraPlayer target;
+    RaycastHit hit;
+    Vector3 direction = Vector3.forward;
+    float step;
+    bool whizzed;
 
-    /// <summary>
-    /// Appelée par le Hunter juste après l'instanciation pour définir la direction de tir.
-    /// Oriente aussi visuellement la balle dans cette direction.
-    /// </summary>
     public void Init(Vector3 shootDirection)
     {
         direction = shootDirection.normalized;
@@ -25,13 +30,47 @@ public class Bullet : MonoBehaviour
 
     void Update()
     {
-        transform.position += direction * speed * Time.deltaTime;
+        Whiz();
+
+        step = speed * Time.deltaTime;
+
+        if (Physics.Raycast(transform.position, direction, out hit, step, ~0, QueryTriggerInteraction.Ignore))
+        {
+            Impact();
+            return;
+        }
+
+        transform.position += direction * step;
     }
 
-    private void OnTriggerEnter(Collider other)
+    void Whiz()
     {
-        // Adapte selon ce que la balle doit faire à l'impact (dégâts, effet, etc.)
-        Debug.Log("Bullet a touché : " + other.name);
+        if (whizzed || PlayerStat.Instance == null) return;
+        if (Vector3.Distance(transform.position, PlayerStat.Instance.transform.position) > whizRange) return;
+
+        whizzed = true;
+        Kick(whizKick);
+    }
+
+    void Impact()
+    {
+        if (impactPrefab != null)
+            Instantiate(impactPrefab, hit.point, Quaternion.LookRotation(hit.normal));
+
+        if (hit.collider.CompareTag(playerTag))
+        {
+            Kick(hitKick);
+
+            if (PlayerStat.Instance != null) PlayerStat.Instance.Gunshot();
+        }
+
         Destroy(gameObject);
+    }
+
+    void Kick(float amount)
+    {
+        if (PlayerStat.Instance == null) return;
+        if (target == null) target = PlayerStat.Instance.GetComponent<CameraPlayer>();
+        if (target != null) target.Kick(amount);
     }
 }

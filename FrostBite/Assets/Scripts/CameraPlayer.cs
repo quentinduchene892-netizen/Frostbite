@@ -17,6 +17,10 @@ public class CameraPlayer : MonoBehaviour
     [SerializeField] float gravity = -20f;
     [SerializeField] float groundPull = -2f;
     [SerializeField] float runThreshold = 0.1f;
+    [SerializeField] float sprintTime = 6f;
+    [SerializeField] float restRate = 0.5f;
+    [SerializeField] float restWait = 1f;
+    [SerializeField] float restNeed = 1.5f;
     [SerializeField] float mouse = 0.12f;
     [SerializeField] float stick = 180f;
     [SerializeField] float minAngle = -80f;
@@ -39,6 +43,10 @@ public class CameraPlayer : MonoBehaviour
     [SerializeField] float fovSmooth = 4f;
     [SerializeField] float dipSize = 0.11f;
     [SerializeField] float dipSmooth = 9f;
+    [SerializeField] float shakeFade = 2.2f;
+    [SerializeField] float shakeSize = 0.085f;
+    [SerializeField] float shakeRoll = 5f;
+    [SerializeField] float shakeRate = 34f;
 
     InputManager input;
     CharacterController controller;
@@ -66,13 +74,21 @@ public class CameraPlayer : MonoBehaviour
     float dip;
     float fov;
     float slow;
+    float stamina;
+    float shake;
+    Vector3 jolt;
+    float restLeft;
+    bool wantsRun;
     bool running;
+    bool tired;
     bool down;
     bool onGround;
-    bool trapped; // true quand le joueur est coincé (ex: piège à loup) : bloque le déplacement
+    bool trapped;
 
     public float Speed => velocity.magnitude;
     public bool Running => running;
+    public float Stamina => stamina;
+    public bool Tired => tired;
     public bool Trapped => trapped;
 
     void Awake()
@@ -84,6 +100,7 @@ public class CameraPlayer : MonoBehaviour
         if (head != null) headStart = head.localPosition;
 
         fov = walkFov;
+        stamina = sprintTime;
 
         if (panTilt == null)
         {
@@ -121,13 +138,14 @@ public class CameraPlayer : MonoBehaviour
         Shake();
     }
 
-    /// <summary>
-    /// Appelée par un piège (ex: WolfTrap) pour bloquer ou libérer le déplacement du joueur.
-    /// La caméra/regard reste utilisable même piégé.
-    /// </summary>
     public void SetTrapped(bool value)
     {
         trapped = value;
+    }
+
+    public void Kick(float amount)
+    {
+        shake = Mathf.Clamp01(shake + amount);
     }
 
     void Turn()
@@ -153,7 +171,28 @@ public class CameraPlayer : MonoBehaviour
 
         if (way.sqrMagnitude > 1f) way.Normalize();
 
-        running = input != null && !down && !trapped && input.Run && move.y > runThreshold;
+        wantsRun = input != null && !down && !trapped && input.Run && move.y > runThreshold;
+        running = wantsRun && !tired && stamina > 0f;
+
+        if (running)
+        {
+            stamina -= Time.deltaTime;
+            restLeft = restWait;
+
+            if (stamina <= 0f)
+            {
+                stamina = 0f;
+                tired = true;
+            }
+        }
+        else
+        {
+            restLeft -= Time.deltaTime;
+
+            if (restLeft <= 0f) stamina = Mathf.Min(sprintTime, stamina + restRate * Time.deltaTime);
+            if (tired && stamina >= restNeed) tired = false;
+        }
+
         slow = stat != null ? stat.Slow : 1f;
         topSpeed = (running ? runSpeed : speed) * slow;
 
@@ -170,6 +209,11 @@ public class CameraPlayer : MonoBehaviour
 
     void Shake()
     {
+        shake = Mathf.MoveTowards(shake, 0f, shakeFade * Time.deltaTime);
+
+        jolt.x = (Mathf.PerlinNoise(Time.time * shakeRate, 0f) - 0.5f) * 2f * shakeSize * shake;
+        jolt.y = (Mathf.PerlinNoise(0f, Time.time * shakeRate) - 0.5f) * 2f * shakeSize * shake;
+
         if (controller.isGrounded && !onGround) dip = dipSize;
 
         onGround = controller.isGrounded;
@@ -189,7 +233,7 @@ public class CameraPlayer : MonoBehaviour
         {
             goal = new Vector3(side, up + breath - dip, 0f);
             bob = Vector3.Lerp(bob, goal, bobSmooth * Time.deltaTime);
-            head.localPosition = headStart + bob;
+            head.localPosition = headStart + bob + jolt;
         }
 
         if (recomposer != null)
@@ -197,7 +241,7 @@ public class CameraPlayer : MonoBehaviour
             lean = -move.x * leanSize;
             roll = Mathf.Lerp(roll, Mathf.Cos(step) * rollSize * (running ? runRoll : 1f) * mix + lean,
                 rollSmooth * Time.deltaTime);
-            recomposer.Dutch = roll;
+            recomposer.Dutch = roll + (Mathf.PerlinNoise(Time.time * shakeRate, 5f) - 0.5f) * 2f * shakeRoll * shake;
         }
 
         if (vcam != null)

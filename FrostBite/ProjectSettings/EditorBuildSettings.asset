@@ -11,5 +11,11 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/InteractEnvironement.unity
     guid: 94dbf17e46832be438776a92329dee29
+  - enabled: 1
+    path: Assets/Scenes/TrapperShoot.unity
+    guid: 22fab9b2549221042a5f7330d71863f7
+  - enabled: 1
+    path: Assets/Scenes/TestLD.unity
+    guid: e328f1306b4be9b4780973c8728302a1
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

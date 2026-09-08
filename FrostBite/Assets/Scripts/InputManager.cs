@@ -11,17 +11,23 @@ public class InputManager : MonoBehaviour
     [SerializeField] string moveName = "Move";
     [SerializeField] string lookName = "Look";
     [SerializeField] string runName = "Sprint";
+    [SerializeField] string takeName = "Interact";
+    [SerializeField] string craftKey = "<Keyboard>/#(a)";
     [SerializeField] string wolfTrap = "QTE";
 
     InputActionMap map;
     InputAction moveAction;
     InputAction lookAction;
     InputAction runAction;
+    InputAction takeAction;
+    InputAction craftAction;
     InputAction wolfTrapAction;
 
     public Vector2 Move => moveAction != null ? moveAction.ReadValue<Vector2>() : Vector2.zero;
     public Vector2 Look => lookAction != null ? lookAction.ReadValue<Vector2>() : Vector2.zero;
     public bool Run => runAction != null && runAction.IsPressed();
+    public bool Interact => takeAction != null && takeAction.IsPressed();
+    public bool Craft => craftAction != null && craftAction.IsPressed();
     public bool MouseLook => lookAction != null && lookAction.activeControl?.device is Pointer;
 
     public bool WolfTrapPressed => wolfTrapAction != null && wolfTrapAction.WasPressedThisFrame();
@@ -31,6 +37,7 @@ public class InputManager : MonoBehaviour
     void Awake()
     {
         Instance = this;
+        craftAction = new InputAction("Craft", InputActionType.Button, craftKey);
         if (actions == null)
         {
             Debug.LogError("InputManager : aucun InputActionAsset assigne.", this);
@@ -45,6 +52,7 @@ public class InputManager : MonoBehaviour
         moveAction = map.FindAction(moveName, false);
         lookAction = map.FindAction(lookName, false);
         runAction = map.FindAction(runName, false);
+        takeAction = map.FindAction(takeName, false);
         wolfTrapAction = map.FindAction(wolfTrap, false);
 
         if (wolfTrapAction == null)
@@ -59,10 +67,12 @@ public class InputManager : MonoBehaviour
     void OnEnable()
     {
         if (map != null) map.Enable();
+        if (craftAction != null) craftAction.Enable();
     }
 
     void OnDisable()
     {
         if (map != null) map.Disable();
+        if (craftAction != null) craftAction.Disable();
     }
 }
