@@ -9,6 +9,7 @@ public class WindStorm : MonoBehaviour
     [SerializeField] Collider area;
     [SerializeField] ParticleSystem snow;
     [SerializeField] ParticleSystem gust;
+    [SerializeField] AudioSource stormAudio;
     [SerializeField] bool on = true;
     [SerializeField] bool random;
     [SerializeField] float calmMin = 20f;
@@ -76,6 +77,13 @@ public class WindStorm : MonoBehaviour
         baseNear = RenderSettings.fogStartDistance;
         baseFar = RenderSettings.fogEndDistance;
         baseTint = RenderSettings.fogColor;
+
+        if (stormAudio != null)
+        {
+            stormAudio.loop = true;
+            stormAudio.volume = 0f;
+            stormAudio.Play();
+        }
     }
 
     void Update()
@@ -89,6 +97,7 @@ public class WindStorm : MonoBehaviour
 
         Blow();
         Fog();
+        Sound();
 
         if (power <= 0f || stat == null) return;
 
@@ -123,6 +132,11 @@ public class WindStorm : MonoBehaviour
             gust.transform.position = stat.transform.position + Vector3.up * gustHeight;
             gustEmission.rateOverTime = gustRate * power;
         }
+    }
+
+    void Sound()
+    {
+        if (stormAudio != null) stormAudio.volume = power;
     }
 
     void Fog()

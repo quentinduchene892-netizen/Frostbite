@@ -34,5 +34,6 @@ public class Hunter : MonoBehaviour
         bullet = shot.GetComponent<Bullet>();
 
         if (bullet != null) bullet.Init(spawnPoint.forward);
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayHunterShot(spawnPoint.position);
     }
 }

@@ -1,0 +1,127 @@
+using UnityEngine;
+
+[DisallowMultipleComponent]
+public class SoundManager : MonoBehaviour
+{
+    public static SoundManager Instance;
+
+    [SerializeField] AudioSource ambientSource;
+    [SerializeField] AudioSource breathSource;
+    [SerializeField] AudioClip forestAmbiance;
+    [SerializeField] AudioClip breathing;
+    [SerializeField] AudioClip hunterShoot;
+    [SerializeField] AudioClip pickup;
+    [SerializeField] AudioClip craft;
+    [SerializeField] AudioClip wolfTrapSnap;
+    [SerializeField] AudioClip wolfTrapRelease;
+    [SerializeField] AudioClip[] snowSteps;
+    [SerializeField] AudioClip[] woodSteps;
+    [SerializeField] float sfxVolume = 1f;
+    [SerializeField] float stepVolume = 0.6f;
+    [SerializeField] float shotMinDistance = 20f;
+    [SerializeField] float shotMaxDistance = 160f;
+
+    int pick;
+    bool breathingOn;
+    GameObject shotObject;
+    AudioSource shotSource;
+
+    void Awake()
+    {
+        Instance = this;
+
+        if (ambientSource == null || forestAmbiance == null) return;
+
+        ambientSource.clip = forestAmbiance;
+        ambientSource.loop = true;
+        ambientSource.Play();
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    public void PlayHunterShot(Vector3 position)
+    {
+        PlayFar(hunterShoot, position, sfxVolume, shotMinDistance, shotMaxDistance);
+    }
+
+    public void PlayPickup(Vector3 position)
+    {
+        PlayAt(pickup, position, sfxVolume);
+    }
+
+    public void PlayCraft(Vector3 position)
+    {
+        PlayAt(craft, position, sfxVolume);
+    }
+
+    public void PlayWolfTrapSnap(Vector3 position)
+    {
+        PlayAt(wolfTrapSnap, position, sfxVolume);
+    }
+
+    public void PlayWolfTrapRelease(Vector3 position)
+    {
+        PlayAt(wolfTrapRelease, position, sfxVolume);
+    }
+
+    public void PlayFootstep(Vector3 position, bool onWood)
+    {
+        PlayAt(Pick(onWood ? woodSteps : snowSteps), position, stepVolume);
+    }
+
+    public void SetBreathing(bool active)
+    {
+        if (active == breathingOn || breathSource == null || breathing == null) return;
+
+        breathingOn = active;
+
+        if (active)
+        {
+            breathSource.clip = breathing;
+            breathSource.loop = true;
+            breathSource.Play();
+        }
+        else
+        {
+            breathSource.Stop();
+        }
+    }
+
+    AudioClip Pick(AudioClip[] clips)
+    {
+        if (clips == null || clips.Length == 0) return null;
+
+        pick = Random.Range(0, clips.Length);
+
+        return clips[pick];
+    }
+
+    void PlayAt(AudioClip clip, Vector3 position, float volume)
+    {
+        if (clip == null) return;
+
+        AudioSource.PlayClipAtPoint(clip, position, volume);
+    }
+
+    void PlayFar(AudioClip clip, Vector3 position, float volume, float minDistance, float maxDistance)
+    {
+        if (clip == null) return;
+
+        shotObject = new GameObject("ShotAudio");
+        shotObject.transform.position = position;
+
+        shotSource = shotObject.AddComponent<AudioSource>();
+        shotSource.clip = clip;
+        shotSource.volume = volume;
+        shotSource.spatialBlend = 1f;
+        shotSource.rolloffMode = AudioRolloffMode.Linear;
+        shotSource.minDistance = minDistance;
+        shotSource.maxDistance = maxDistance;
+        shotSource.Play();
+
+        Destroy(shotObject, clip.length);
+    }
+}

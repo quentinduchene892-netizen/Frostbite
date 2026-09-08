@@ -47,6 +47,8 @@ public class CameraPlayer : MonoBehaviour
     [SerializeField] float shakeSize = 0.085f;
     [SerializeField] float shakeRoll = 5f;
     [SerializeField] float shakeRate = 34f;
+    [SerializeField] string woodTag = "Wood";
+    [SerializeField] float footRay = 1.5f;
 
     InputManager input;
     CharacterController controller;
@@ -78,12 +80,15 @@ public class CameraPlayer : MonoBehaviour
     float shake;
     Vector3 jolt;
     float restLeft;
+    float stepMark;
     bool wantsRun;
     bool running;
     bool tired;
     bool down;
     bool onGround;
     bool trapped;
+    bool onWood;
+    RaycastHit footHit;
 
     public float Speed => velocity.magnitude;
     public bool Running => running;
@@ -136,6 +141,7 @@ public class CameraPlayer : MonoBehaviour
         Turn();
         Walk();
         Shake();
+        Breathe();
     }
 
     public void SetTrapped(bool value)
@@ -223,7 +229,17 @@ public class CameraPlayer : MonoBehaviour
         size = running ? runBob : 1f;
         step += Speed * Time.deltaTime * bobRate / Mathf.Max(speed, 0.01f);
 
-        if (step > Mathf.PI * 2f) step -= Mathf.PI * 2f;
+        if (step > Mathf.PI * 2f)
+        {
+            step -= Mathf.PI * 2f;
+            stepMark -= Mathf.PI * 2f;
+        }
+
+        if (onGround && mix > 0.05f && step - stepMark >= Mathf.PI)
+        {
+            stepMark += Mathf.PI;
+            Footstep();
+        }
 
         up = Mathf.Sin(step * 2f) * bobUp * size * mix;
         side = Mathf.Cos(step) * bobSide * size * mix;
@@ -249,5 +265,21 @@ public class CameraPlayer : MonoBehaviour
             fov = Mathf.Lerp(fov, running ? runFov : walkFov, fovSmooth * Time.deltaTime);
             vcam.Lens.FieldOfView = fov;
         }
+    }
+
+    void Footstep()
+    {
+        if (SoundManager.Instance == null) return;
+
+        onWood = Physics.Raycast(transform.position, Vector3.down, out footHit, footRay) && footHit.collider.CompareTag(woodTag);
+
+        SoundManager.Instance.PlayFootstep(transform.position, onWood);
+    }
+
+    void Breathe()
+    {
+        if (SoundManager.Instance == null) return;
+
+        SoundManager.Instance.SetBreathing(tired && !down);
     }
 }
