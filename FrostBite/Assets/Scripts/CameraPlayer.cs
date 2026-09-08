@@ -47,6 +47,22 @@ public class CameraPlayer : MonoBehaviour
     [SerializeField] float shakeSize = 0.085f;
     [SerializeField] float shakeRoll = 5f;
     [SerializeField] float shakeRate = 34f;
+    [SerializeField] string woodTag = "Wood";
+    [SerializeField] float footRay = 1.5f;
+
+    [Header("Log Balance")]
+    [SerializeField] float logSpeedMultiplier = 0.55f;
+    [SerializeField] float logLeanSpeedMin = 4f;
+    [SerializeField] float logLeanSpeedMax = 8f;
+    [SerializeField] float logCorrectPower = 70f;
+    [SerializeField] float logRecoverSpeed = 6f;
+    [SerializeField] float logFallThreshold = 35f;
+    [SerializeField] float logPushForce = 2.5f;
+    [SerializeField] float logPushDecay = 6f;
+    [SerializeField] float logPushCooldown = 0.6f;
+    [SerializeField] float logKickOnPush = 0.35f;
+    [SerializeField] float logDutchMult = 0.4f;
+    [SerializeField] bool logInvertControls = false;
 
     InputManager input;
     CharacterController controller;
@@ -78,18 +94,32 @@ public class CameraPlayer : MonoBehaviour
     float shake;
     Vector3 jolt;
     float restLeft;
+    float stepMark;
     bool wantsRun;
     bool running;
     bool tired;
     bool down;
     bool onGround;
     bool trapped;
+    bool onWood;
+    RaycastHit footHit;
+
+    float logTilt;
+    float logDir;
+    float logLeanSpeed;
+    float logPushTimer;
+    Vector3 logPushVelocity;
+    Vector3 logAxis;
+    float logMoveSign;
+    bool onLog;
 
     public float Speed => velocity.magnitude;
     public bool Running => running;
     public float Stamina => stamina;
     public bool Tired => tired;
     public bool Trapped => trapped;
+    public bool OnLog => onLog;
+    public float LogBalance01 => Mathf.Clamp01(Mathf.Abs(logTilt) / logFallThreshold);
 
     void Awake()
     {
@@ -132,10 +162,13 @@ public class CameraPlayer : MonoBehaviour
         input = InputManager.Instance;
 
         down = stat != null && (stat.Fainted || stat.Dead);
+        move = input != null && !down && !trapped ? input.Move : Vector2.zero;
 
         Turn();
+        Balance();
         Walk();
         Shake();
+        Breathe();
     }
 
     public void SetTrapped(bool value)
@@ -146,6 +179,31 @@ public class CameraPlayer : MonoBehaviour
     public void Kick(float amount)
     {
         shake = Mathf.Clamp01(shake + amount);
+    }
+
+    // axis = direction du rondin (sa longueur). Le joueur ne pourra plus se deplacer
+    // que le long de cet axe une fois sur le tronc.
+    public void EnterLog(Vector3 axis)
+    {
+        onLog = true;
+        logTilt = 0f;
+        logPushTimer = 0f;
+        logDir = Random.value < 0.5f ? -1f : 1f;
+        logLeanSpeed = Random.Range(logLeanSpeedMin, logLeanSpeedMax);
+
+        axis.y = 0f;
+        logAxis = axis.sqrMagnitude > 0.0001f ? axis.normalized : transform.forward;
+
+        // on fige le sens "avancer" en fonction de l'orientation du joueur au moment ou il monte,
+        // pour que le mouvement sur le rail ne depende plus de la camera ensuite
+        float facing = Vector3.Dot(transform.forward, logAxis);
+        logMoveSign = facing >= 0f ? 1f : -1f;
+    }
+
+    public void ExitLog()
+    {
+        onLog = false;
+        logTilt = 0f;
     }
 
     void Turn()
@@ -164,14 +222,67 @@ public class CameraPlayer : MonoBehaviour
         body.rotation = Quaternion.Euler(0f, panTilt.PanAxis.Value, 0f);
     }
 
+    void Balance()
+    {
+        logPushTimer -= Time.deltaTime;
+
+        if (!onLog || down)
+        {
+            logTilt = Mathf.MoveTowards(logTilt, 0f, logRecoverSpeed * 2f * Time.deltaTime);
+            return;
+        }
+
+        float prevSign = Mathf.Sign(logTilt);
+
+        // le rondin penche tout seul en continu dans une direction
+        logTilt += logDir * logLeanSpeed * Time.deltaTime;
+
+        // le joueur corrige avec gauche/droite (Q/D) : ceci n'affecte QUE l'equilibre,
+        // pas le deplacement physique (voir Walk, ou move.x n'est plus utilise sur le rondin)
+        float correctInput = logInvertControls ? -move.x : move.x;
+        logTilt += correctInput * logCorrectPower * Time.deltaTime;
+
+        logTilt = Mathf.Clamp(logTilt, -(logFallThreshold + 15f), logFallThreshold + 15f);
+
+        // si le joueur ramene le tilt de l'autre cote (ou proche de 0), le rondin repart
+        // dans une nouvelle direction, avec une vitesse legerement differente
+        if (Mathf.Sign(logTilt) != prevSign || Mathf.Abs(logTilt) < 1.5f)
+        {
+            logDir = Random.value < 0.5f ? -1f : 1f;
+            logLeanSpeed = Random.Range(logLeanSpeedMin, logLeanSpeedMax);
+        }
+
+        if (Mathf.Abs(logTilt) >= logFallThreshold && logPushTimer <= 0f)
+            PushFromLog();
+    }
+
+    void PushFromLog()
+    {
+        // sur le rondin, la propulsion se fait perpendiculairement a l'axe du tronc
+        Vector3 side = Vector3.Cross(Vector3.up, logAxis);
+        Vector3 pushDir = side * Mathf.Sign(logTilt);
+        logPushVelocity += pushDir * logPushForce;
+
+        // on redonne un peu de marge au joueur au lieu de le repousser en boucle
+        logTilt = Mathf.Sign(logTilt) * (logFallThreshold * 0.3f);
+        logPushTimer = logPushCooldown;
+
+        Kick(logKickOnPush);
+    }
+
     void Walk()
     {
-        move = input != null && !down && !trapped ? input.Move : Vector2.zero;
         way = transform.right * move.x + transform.forward * move.y;
 
         if (way.sqrMagnitude > 1f) way.Normalize();
 
-        wantsRun = input != null && !down && !trapped && input.Run && move.y > runThreshold;
+        // sur le rondin : le mouvement ne depend plus du tout de l'orientation de la camera.
+        // W/S avancent/reculent le long du rail (axe fige a l'entree), Q/D ne bougent plus rien
+        // physiquement, ils ne servent qu'a Balance() pour corriger le tilt.
+        if (onLog)
+            way = logAxis * (move.y * logMoveSign);
+
+        wantsRun = input != null && !down && !trapped && !onLog && input.Run && move.y > runThreshold;
         running = wantsRun && !tired && stamina > 0f;
 
         if (running)
@@ -194,6 +305,8 @@ public class CameraPlayer : MonoBehaviour
         }
 
         slow = stat != null ? stat.Slow : 1f;
+        if (onLog) slow *= logSpeedMultiplier;
+
         topSpeed = (running ? runSpeed : speed) * slow;
 
         velocity = Vector3.MoveTowards(velocity, way * topSpeed, boost * Time.deltaTime);
@@ -203,8 +316,10 @@ public class CameraPlayer : MonoBehaviour
         else
             fall += gravity * Time.deltaTime;
 
-        motion = velocity + Vector3.up * fall;
+        motion = velocity + Vector3.up * fall + logPushVelocity;
         controller.Move(motion * Time.deltaTime);
+
+        logPushVelocity = Vector3.MoveTowards(logPushVelocity, Vector3.zero, logPushDecay * Time.deltaTime);
     }
 
     void Shake()
@@ -223,7 +338,17 @@ public class CameraPlayer : MonoBehaviour
         size = running ? runBob : 1f;
         step += Speed * Time.deltaTime * bobRate / Mathf.Max(speed, 0.01f);
 
-        if (step > Mathf.PI * 2f) step -= Mathf.PI * 2f;
+        if (step > Mathf.PI * 2f)
+        {
+            step -= Mathf.PI * 2f;
+            stepMark -= Mathf.PI * 2f;
+        }
+
+        if (onGround && mix > 0.05f && step - stepMark >= Mathf.PI)
+        {
+            stepMark += Mathf.PI;
+            Footstep();
+        }
 
         up = Mathf.Sin(step * 2f) * bobUp * size * mix;
         side = Mathf.Cos(step) * bobSide * size * mix;
@@ -241,7 +366,8 @@ public class CameraPlayer : MonoBehaviour
             lean = -move.x * leanSize;
             roll = Mathf.Lerp(roll, Mathf.Cos(step) * rollSize * (running ? runRoll : 1f) * mix + lean,
                 rollSmooth * Time.deltaTime);
-            recomposer.Dutch = roll + (Mathf.PerlinNoise(Time.time * shakeRate, 5f) - 0.5f) * 2f * shakeRoll * shake;
+            recomposer.Dutch = roll + logTilt * logDutchMult
+                + (Mathf.PerlinNoise(Time.time * shakeRate, 5f) - 0.5f) * 2f * shakeRoll * shake;
         }
 
         if (vcam != null)
@@ -249,5 +375,21 @@ public class CameraPlayer : MonoBehaviour
             fov = Mathf.Lerp(fov, running ? runFov : walkFov, fovSmooth * Time.deltaTime);
             vcam.Lens.FieldOfView = fov;
         }
+    }
+
+    void Footstep()
+    {
+        if (SoundManager.Instance == null) return;
+
+        onWood = Physics.Raycast(transform.position, Vector3.down, out footHit, footRay) && footHit.collider.CompareTag(woodTag);
+
+        SoundManager.Instance.PlayFootstep(transform.position, onWood);
+    }
+
+    void Breathe()
+    {
+        if (SoundManager.Instance == null) return;
+
+        SoundManager.Instance.SetBreathing(tired && !down);
     }
 }

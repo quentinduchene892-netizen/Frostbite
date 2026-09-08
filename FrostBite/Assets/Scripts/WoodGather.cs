@@ -69,6 +69,7 @@ public class WoodGather : MonoBehaviour
         progress = 0f;
 
         if (Inventory.Instance != null) Inventory.Instance.Add(target.Amount);
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayPickup(target.transform.position);
 
         Destroy(target.gameObject);
         target = null;

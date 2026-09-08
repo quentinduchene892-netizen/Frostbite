@@ -9,6 +9,7 @@ public class WindStorm : MonoBehaviour
     [SerializeField] Collider area;
     [SerializeField] ParticleSystem snow;
     [SerializeField] ParticleSystem gust;
+    [SerializeField] AudioSource stormAudio;
     [SerializeField] bool on = true;
     [SerializeField] bool random;
     [SerializeField] float calmMin = 20f;
@@ -73,9 +74,33 @@ public class WindStorm : MonoBehaviour
 
         if (sky != null) baseSky = sky.backgroundColor;
 
+        if (driveFog)
+        {
+            // Le pilotage de tempete agit sur fogStartDistance / fogEndDistance.
+            // Sans brouillard actif, et hors du mode Linear, ces valeurs ne sont jamais lues.
+            if (!RenderSettings.fog)
+            {
+                RenderSettings.fog = true;
+                Debug.LogWarning("WindStorm : le brouillard etait desactive dans la scene, il vient d'etre active.", this);
+            }
+
+            if (RenderSettings.fogMode != FogMode.Linear)
+            {
+                RenderSettings.fogMode = FogMode.Linear;
+                Debug.LogWarning("WindStorm : brouillard bascule en mode Linear (les modes Exponential ignorent debut/fin).", this);
+            }
+        }
+
         baseNear = RenderSettings.fogStartDistance;
         baseFar = RenderSettings.fogEndDistance;
         baseTint = RenderSettings.fogColor;
+
+        if (stormAudio != null)
+        {
+            stormAudio.loop = true;
+            stormAudio.volume = 0f;
+            stormAudio.Play();
+        }
     }
 
     void Update()
@@ -89,6 +114,7 @@ public class WindStorm : MonoBehaviour
 
         Blow();
         Fog();
+        Sound();
 
         if (power <= 0f || stat == null) return;
 
@@ -123,6 +149,11 @@ public class WindStorm : MonoBehaviour
             gust.transform.position = stat.transform.position + Vector3.up * gustHeight;
             gustEmission.rateOverTime = gustRate * power;
         }
+    }
+
+    void Sound()
+    {
+        if (stormAudio != null) stormAudio.volume = power;
     }
 
     void Fog()

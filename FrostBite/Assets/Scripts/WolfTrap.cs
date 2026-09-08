@@ -34,6 +34,7 @@ public class WolfTrap : MonoBehaviour
         trappedPlayer = player;
 
         if (PlayerStat.Instance != null) PlayerStat.Instance.AddStress(stressOnTrap);
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayWolfTrapSnap(transform.position);
 
         view = player.GetComponent<CameraPlayer>();
         if (view != null) view.SetTrapped(true);
@@ -62,6 +63,7 @@ public class WolfTrap : MonoBehaviour
     {
         view = trappedPlayer != null ? trappedPlayer.GetComponent<CameraPlayer>() : null;
         if (view != null) view.SetTrapped(false);
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayWolfTrapRelease(transform.position);
 
         playerTrapped = false;
         trappedPlayer = null;

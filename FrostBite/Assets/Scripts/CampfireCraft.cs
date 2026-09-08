@@ -149,5 +149,7 @@ public class CampfireCraft : MonoBehaviour
         if (!Inventory.Instance.Take(woodCost)) return;
 
         Instantiate(firePrefab, aim, Quaternion.identity);
+
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayCraft(aim);
     }
 }
