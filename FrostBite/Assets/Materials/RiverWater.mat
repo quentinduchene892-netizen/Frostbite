@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: RiverWater
+  m_Shader: {fileID: 4800000, guid: a208ac0343084fc47a2887cb82208e13, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _DepthRange: 3.5
+    - _FlowSpeed: 1.5
+    - _FoamAmount: 0.6
+    - _FoamCutoff: 0.62
+    - _FoamEdge: 1.4
+    - _Fresnel: 1.2
+    - _NormalStrength: 1.6
+    - _SpecPower: 48
+    - _SpecStrength: 1.4
+    - _Stretch: 3
+    - _UseUVFlow: 0
+    - _WaveHeight: 0.4
+    - _WaveScale: 0.22
+    m_Colors:
+    - _DeepColor: {r: 0.05, g: 0.19, b: 0.29, a: 0.95}
+    - _FlowDir: {r: 0, g: 1, b: 0, a: 0}
+    - _FoamColor: {r: 1, g: 1, b: 1, a: 1}
+    - _ShallowColor: {r: 0.58, g: 0.8, b: 0.84, a: 0.62}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

@@ -74,6 +74,23 @@ public class WindStorm : MonoBehaviour
 
         if (sky != null) baseSky = sky.backgroundColor;
 
+        if (driveFog)
+        {
+            // Le pilotage de tempete agit sur fogStartDistance / fogEndDistance.
+            // Sans brouillard actif, et hors du mode Linear, ces valeurs ne sont jamais lues.
+            if (!RenderSettings.fog)
+            {
+                RenderSettings.fog = true;
+                Debug.LogWarning("WindStorm : le brouillard etait desactive dans la scene, il vient d'etre active.", this);
+            }
+
+            if (RenderSettings.fogMode != FogMode.Linear)
+            {
+                RenderSettings.fogMode = FogMode.Linear;
+                Debug.LogWarning("WindStorm : brouillard bascule en mode Linear (les modes Exponential ignorent debut/fin).", this);
+            }
+        }
+
         baseNear = RenderSettings.fogStartDistance;
         baseFar = RenderSettings.fogEndDistance;
         baseTint = RenderSettings.fogColor;

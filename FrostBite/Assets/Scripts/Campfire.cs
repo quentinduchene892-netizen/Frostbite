@@ -18,7 +18,6 @@ public class Campfire : MonoBehaviour
     float drop;
     bool near;
     bool lit;
-    bool used;
 
     public float Radius => radius;
     public float Left => left;
@@ -43,36 +42,32 @@ public class Campfire : MonoBehaviour
 
     void Update()
     {
+        if (!lit) return;
+
+        left -= Time.deltaTime;
+
         stat = PlayerStat.Instance;
-
-        if (stat == null) return;
-
-        gap = Vector3.Distance(stat.transform.position, transform.position);
+        gap = stat != null ? Vector3.Distance(stat.transform.position, transform.position) : Mathf.Infinity;
         near = gap <= radius;
 
-        if (!lit || !near || stat.Dead) return;
+        if (near && !stat.Dead) Heat();
 
-        used = false;
+        if (left <= 0f) Out();
+    }
 
+    void Heat()
+    {
         if (stat.Cold > coldFloor)
         {
             drop = Mathf.Min(warmRate * Time.deltaTime, stat.Cold - coldFloor);
             stat.Warm(drop);
-            used = true;
         }
 
         if (stat.Stress > stressFloor)
         {
             drop = Mathf.Min(calmRate * Time.deltaTime, stat.Stress - stressFloor);
             stat.Calm(drop);
-            used = true;
         }
-
-        if (!used) return;
-
-        left -= Time.deltaTime;
-
-        if (left <= 0f) Out();
     }
 
     void Out()
