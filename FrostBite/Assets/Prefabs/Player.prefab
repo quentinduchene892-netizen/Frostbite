@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 6177436797677242013}
   - component: {fileID: 93062687781029896}
   - component: {fileID: 7078413267730586261}
+  - component: {fileID: 8295216979644755793}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -131,7 +132,7 @@ MonoBehaviour:
   logPushCooldown: 0.6
   logKickOnPush: 0.35
   logDutchMult: 0.4
-  logInvertControls: 0
+  logInvertControls: 1
 --- !u!114 &3985843512759883672
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -157,8 +158,8 @@ MonoBehaviour:
   coldRatio: 1.5
   coldStress: 1
   faintTime: 4
-  freezeHit: 8
-  gunshotDamage: 25
+  freezeHit: 20
+  gunshotDamage: 100
   gunshotStress: 20
   wetColdRate: 6
   dryTime: 5
@@ -224,16 +225,66 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 31641029782447786}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1838820344481004d824f8d1b2a95777, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ColdVignette
-  coldEffectMaterial: {fileID: 0}
-  intensityRef: Intensity
+  volume: {fileID: 0}
   smooth: 4
   minIntensity: 0
-  maxIntensity: 1
+  maxIntensity: 0.5
+--- !u!114 &8295216979644755793
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 31641029782447786}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4164ff6f4e78e374d95007f0563df37e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StressEffects
+  volume: {fileID: 0}
+  cam: {fileID: 8681800783107664290}
+  calmBand: 0.25
+  tensionBand: 0.5
+  panicBand: 0.7
+  collapseBand: 0.85
+  heartClip: {fileID: 8300000, guid: ef2001fe19c64e64a93a12d09f2853e9, type: 3}
+  bpmCalm: 60
+  bpmMax: 150
+  beatVolume: 0.55
+  breathClip: {fileID: 8300000, guid: d476b8acf69cbc24c943d2937e83b998, type: 3}
+  breathVolume: 0.5
+  breathPitchMin: 1
+  breathPitchMax: 1.25
+  coldVignette: 1
+  stressVignette: 0.55
+  pulseVignette: 0.18
+  vignetteSmooth: 4
+  coldTint: {r: 0.58, g: 0.89, b: 1, a: 1}
+  stressTint: {r: 0.12, g: 0.01, b: 0.01, a: 1}
+  vignetteMax: 0.7
+  smoothCalm: 0.7
+  smoothPanic: 0.5
+  roundedVignette: 1
+  pulseDistort: 0.35
+  tinnitusVolume: 0.05
+  tinnitusHz: 3000
+  tinnitusFade: 1.5
+  cutoffOpen: 22000
+  cutoffChoked: 900
+  ghostSteps:
+  - {fileID: 8300000, guid: ea6446c14eed0db42be87ad053ff602b, type: 3}
+  - {fileID: 8300000, guid: 732967da13ebb0e46876976d5facd77e, type: 3}
+  - {fileID: 8300000, guid: 1973bbf1a8c7caf4bb98fc8640bf4324, type: 3}
+  - {fileID: 8300000, guid: 382cc5f522ff79d4bae0d3f04c5863df, type: 3}
+  ghostMinDelay: 4
+  ghostMaxDelay: 12
+  blackoutFrom: 0.95
+  blackoutTime: 0.2
 --- !u!1 &3682699508411479624
 GameObject:
   m_ObjectHideFlags: 0
