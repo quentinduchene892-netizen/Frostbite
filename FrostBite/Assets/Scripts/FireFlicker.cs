@@ -26,7 +26,8 @@ public class FireFlicker : MonoBehaviour
         home = transform.localPosition;
         seed = Random.value * 100f;
 
-        if (baseIntensity <= 0f) baseIntensity = lamp.intensity;
+        if (baseIntensity <= 0f) 
+            baseIntensity = lamp.intensity;
         if (baseRange <= 0f) baseRange = lamp.range;
     }
 

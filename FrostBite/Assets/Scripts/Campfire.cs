@@ -13,6 +13,7 @@ public class Campfire : MonoBehaviour
     [SerializeField] float healRate = 4f;
     [SerializeField] float coldFloor = 0f;
     [SerializeField] float stressFloor = 0f;
+    [SerializeField] private GameObject Flame;
 
     PlayerStat stat;
     float left;
@@ -83,6 +84,7 @@ public class Campfire : MonoBehaviour
         lit = true;
 
         if (glow != null) glow.enabled = true;
+        if (Flame != null) Flame.SetActive(true);
         if (fireAudio != null && !fireAudio.isPlaying) fireAudio.Play();
     }
 
@@ -92,6 +94,7 @@ public class Campfire : MonoBehaviour
         lit = false;
 
         if (glow != null) glow.enabled = false;
+        if (Flame != null) Flame.SetActive(false);
         if (fireAudio != null) fireAudio.Stop();
     }
 
