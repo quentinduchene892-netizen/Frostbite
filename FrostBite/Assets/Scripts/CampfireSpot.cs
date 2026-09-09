@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Emplacement autorise pour un feu de camp : une clairiere.
-// Le joueur ne peut construire nulle part ailleurs.
 [DisallowMultipleComponent]
 public class CampfireSpot : MonoBehaviour
 {
@@ -26,8 +24,6 @@ public class CampfireSpot : MonoBehaviour
 
     public float Radius => radius;
     public bool Lit => fire != null && fire.Lit;
-    // Un foyer deja consume ne fume plus : il cesse de servir de repere,
-    // ce qui pousse le joueur vers la clairiere suivante.
     public bool Spent => spent;
 
     private void OnEnable()
@@ -73,15 +69,11 @@ public class CampfireSpot : MonoBehaviour
         return best;
     }
 
-    // Le feu allume prend le relais : on coupe la fumee froide de la souche.
     public void SetSmokeActive(bool active)
     {
         if (smoke != null && smoke.activeSelf != active) smoke.SetActive(active);
     }
 
-    // La clairiere la plus proche passe sa fumee sur un materiau que le brouillard
-    // n'attenue pas, et l'allonge : c'est elle qui sert de cap. Les autres gardent
-    // un panache local qui disparait normalement avec la distance.
     public void SetBeacon(bool active)
     {
         if (smokeSystem == null) return;
@@ -114,7 +106,6 @@ public class CampfireSpot : MonoBehaviour
 
         if (fire.Lit) { SetSmokeActive(false); return; }
 
-        // une fois le foyer consume, il ne fume plus du tout
         if (everLit) { spent = true; SetSmokeActive(false); return; }
 
         SetSmokeActive(true);

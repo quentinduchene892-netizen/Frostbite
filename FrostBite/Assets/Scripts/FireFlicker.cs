@@ -1,7 +1,5 @@
 using UnityEngine;
 
-// Fait vivre la lumiere d'un feu. Une flamme parfaitement fixe ne ressemble a rien,
-// et c'est l'objet que le joueur cherche pendant tout le run.
 [RequireComponent(typeof(Light))]
 [DisallowMultipleComponent]
 public class FireFlicker : MonoBehaviour
@@ -26,7 +24,7 @@ public class FireFlicker : MonoBehaviour
     {
         lamp = GetComponent<Light>();
         home = transform.localPosition;
-        seed = Random.value * 100f;   // chaque feu bat a son propre rythme
+        seed = Random.value * 100f;
 
         if (baseIntensity <= 0f) baseIntensity = lamp.intensity;
         if (baseRange <= 0f) baseRange = lamp.range;
@@ -46,8 +44,6 @@ public class FireFlicker : MonoBehaviour
 
         float t = Time.time;
 
-        // Deux bruits de frequences differentes : sans le lent ca vibre bêtement,
-        // sans le rapide ca pulse comme une respiration mecanique.
         float slow = Mathf.PerlinNoise(seed, t * slowSpeed) - 0.5f;
         float fast = Mathf.PerlinNoise(seed + 31f, t * fastSpeed) - 0.5f;
         float f = slow * 1.4f + fast * 0.6f;

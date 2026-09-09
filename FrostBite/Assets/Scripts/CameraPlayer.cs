@@ -1,4 +1,4 @@
-﻿using Unity.Cinemachine;
+using Unity.Cinemachine;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -181,8 +181,6 @@ public class CameraPlayer : MonoBehaviour
         shake = Mathf.Clamp01(shake + amount);
     }
 
-    // axis = direction du rondin (sa longueur). Le joueur ne pourra plus se deplacer
-    // que le long de cet axe une fois sur le tronc.
     public void EnterLog(Vector3 axis)
     {
         onLog = true;
@@ -194,8 +192,6 @@ public class CameraPlayer : MonoBehaviour
         axis.y = 0f;
         logAxis = axis.sqrMagnitude > 0.0001f ? axis.normalized : transform.forward;
 
-        // on fige le sens "avancer" en fonction de l'orientation du joueur au moment ou il monte,
-        // pour que le mouvement sur le rail ne depende plus de la camera ensuite
         float facing = Vector3.Dot(transform.forward, logAxis);
         logMoveSign = facing >= 0f ? 1f : -1f;
     }
@@ -234,18 +230,13 @@ public class CameraPlayer : MonoBehaviour
 
         float prevSign = Mathf.Sign(logTilt);
 
-        // le rondin penche tout seul en continu dans une direction
         logTilt += logDir * logLeanSpeed * Time.deltaTime;
 
-        // le joueur corrige avec gauche/droite (Q/D) : ceci n'affecte QUE l'equilibre,
-        // pas le deplacement physique (voir Walk, ou move.x n'est plus utilise sur le rondin)
         float correctInput = logInvertControls ? -move.x : move.x;
         logTilt += correctInput * logCorrectPower * Time.deltaTime;
 
         logTilt = Mathf.Clamp(logTilt, -(logFallThreshold + 15f), logFallThreshold + 15f);
 
-        // si le joueur ramene le tilt de l'autre cote (ou proche de 0), le rondin repart
-        // dans une nouvelle direction, avec une vitesse legerement differente
         if (Mathf.Sign(logTilt) != prevSign || Mathf.Abs(logTilt) < 1.5f)
         {
             logDir = Random.value < 0.5f ? -1f : 1f;
@@ -258,12 +249,10 @@ public class CameraPlayer : MonoBehaviour
 
     void PushFromLog()
     {
-        // sur le rondin, la propulsion se fait perpendiculairement a l'axe du tronc
         Vector3 side = Vector3.Cross(Vector3.up, logAxis);
         Vector3 pushDir = side * Mathf.Sign(logTilt);
         logPushVelocity += pushDir * logPushForce;
 
-        // on redonne un peu de marge au joueur au lieu de le repousser en boucle
         logTilt = Mathf.Sign(logTilt) * (logFallThreshold * 0.3f);
         logPushTimer = logPushCooldown;
 
@@ -276,9 +265,6 @@ public class CameraPlayer : MonoBehaviour
 
         if (way.sqrMagnitude > 1f) way.Normalize();
 
-        // sur le rondin : le mouvement ne depend plus du tout de l'orientation de la camera.
-        // W/S avancent/reculent le long du rail (axe fige a l'entree), Q/D ne bougent plus rien
-        // physiquement, ils ne servent qu'a Balance() pour corriger le tilt.
         if (onLog)
             way = logAxis * (move.y * logMoveSign);
 

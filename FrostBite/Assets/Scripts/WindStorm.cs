@@ -56,7 +56,6 @@ public class WindStorm : MonoBehaviour
 
     public float Power => power;
     public bool Inside => inside;
-    // 1 = plein vent, 0 = totalement protege.
     public float Exposure => exposure;
     public float Shelter => shelter;
 
@@ -88,8 +87,6 @@ public class WindStorm : MonoBehaviour
 
         if (driveFog)
         {
-            // Le pilotage de tempete agit sur fogStartDistance / fogEndDistance.
-            // Sans brouillard actif, et hors du mode Linear, ces valeurs ne sont jamais lues.
             if (!RenderSettings.fog)
             {
                 RenderSettings.fog = true;
@@ -136,7 +133,6 @@ public class WindStorm : MonoBehaviour
         stat.AddStress(stressRate * power * exposure * Time.deltaTime);
     }
 
-    // La foret est un abri : sous les arbres, la tempete perd l'essentiel de sa morsure.
     void UpdateShelter()
     {
         float target = 0f;

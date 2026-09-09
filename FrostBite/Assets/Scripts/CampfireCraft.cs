@@ -105,8 +105,6 @@ public class CampfireCraft : MonoBehaviour
         }
     }
 
-    // Un feu ne se rallume que dans une clairiere : sol plat, a portee,
-    // dans le rayon d'un CampfireSpot, et pas deja allume.
     bool Allowed(Vector3 normal)
     {
         if (normal.y < flatEnough || Reach(aim) > range) return false;
@@ -118,7 +116,6 @@ public class CampfireCraft : MonoBehaviour
         d.y = 0f;
         if (d.magnitude > spot.Radius) return false;
 
-        // le fantome se cale sur le foyer : c'est lui qu'on va rallumer
         aim = spot.transform.position;
         return true;
     }
@@ -167,7 +164,6 @@ public class CampfireCraft : MonoBehaviour
         if (spot == null || spot.Lit || Inventory.Instance == null) return;
         if (!Inventory.Instance.Take(woodCost)) return;
 
-        // On rallume le foyer existant au lieu d'en empiler un nouveau par-dessus.
         spot.Light();
 
         if (SoundManager.Instance != null) SoundManager.Instance.PlayCraft(spot.transform.position);

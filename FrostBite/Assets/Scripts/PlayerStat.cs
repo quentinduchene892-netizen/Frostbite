@@ -39,6 +39,7 @@ public class PlayerStat : MonoBehaviour
     bool fainted;
     bool frozen;
     bool shot;
+    bool fell;
     bool dead;
     bool reloading;
 
@@ -57,6 +58,7 @@ public class PlayerStat : MonoBehaviour
     public float Wetness => wetness;
 
     public string Cause => shot ? "Vous avez été tué par balle."
+        : fell ? "Vous êtes tombé dans le gouffre."
         : fainted && frozen ? "Vous vous êtes évanoui et vous êtes mort de froid."
         : fainted ? "Vous vous êtes évanoui."
         : frozen ? "Vous êtes mort de froid."
@@ -91,7 +93,6 @@ public class PlayerStat : MonoBehaviour
 
         if (!fainted && stress >= maxStress) fainted = true;
 
-        // Sortir de l'eau ne suffit pas : tant qu'on est trempe, le froid continue de grimper.
         cold = Mathf.Clamp(cold + (coldRate + wetColdRate * wetness) * Time.deltaTime, 0f, maxCold);
         over = Mathf.InverseLerp(coldPoint, maxCold, cold);
         stress = Mathf.Clamp(stress + (coldStress * over - calmRate) * Time.deltaTime, 0f, maxStress);
@@ -109,13 +110,11 @@ public class PlayerStat : MonoBehaviour
         slow = fainted ? 0f : Mathf.Lerp(1f, slowFloor, over) * waterSlow;
     }
 
-    // Patauger dans l'eau glacee doit se sentir dans les jambes, pas seulement dans la jauge.
     public void Soak()
     {
         wetness = 1f;
     }
 
-    // Appele par le feu de camp : c'est le seul moyen de secher.
     public void Dry(float seconds)
     {
         if (wetness <= 0f) return;
@@ -166,8 +165,15 @@ public class PlayerStat : MonoBehaviour
         AddStress(gunshotStress);
         Hurt(gunshotDamage);
 
-        // La cause de mort ne doit dire "tue par balle" que si c'est bien la balle qui a fini le travail.
         if (life <= 0f) shot = true;
+    }
+
+    public void Fall()
+    {
+        if (dead) return;
+
+        fell = true;
+        Hurt(maxLife);
     }
 
     public void Hurt(float amount)
@@ -197,6 +203,7 @@ public class PlayerStat : MonoBehaviour
         fainted = false;
         frozen = false;
         shot = false;
+        fell = false;
         dead = false;
         reloading = false;
         deathLeft = 0f;

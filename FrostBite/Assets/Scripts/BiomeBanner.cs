@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-// Affiche le nom de la region traversee, a la maniere d'une entree de sanctuaire :
-// apparition douce, maintien, disparition.
 [DisallowMultipleComponent]
 public class BiomeBanner : MonoBehaviour
 {
@@ -57,7 +55,6 @@ public class BiomeBanner : MonoBehaviour
         Refresh();
     }
 
-    // La region affichee est toujours la plus prioritaire parmi celles ou l'on se trouve.
     private void Refresh()
     {
         Biome best = null;

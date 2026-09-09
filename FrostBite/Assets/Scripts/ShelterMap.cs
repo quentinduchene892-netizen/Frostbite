@@ -1,8 +1,5 @@
 using UnityEngine;
 
-// Mesure a quel point un point du monde est abrite par la foret.
-// On lit les instances d'arbres du Terrain, pas la physique : les colliders
-// d'arbres de Terrain ne sont pas fiables pour un raycast.
 [DisallowMultipleComponent]
 public class ShelterMap : MonoBehaviour
 {
@@ -32,7 +29,6 @@ public class ShelterMap : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    // Une seule passe au demarrage : ensuite la lecture est en temps constant.
     public void Build()
     {
         ready = false;
@@ -62,7 +58,6 @@ public class ShelterMap : MonoBehaviour
         ready = true;
     }
 
-    // 0 = totalement expose, 1 = sous couvert dense.
     public float Shelter(Vector3 world)
     {
         if (!ready) return 0f;

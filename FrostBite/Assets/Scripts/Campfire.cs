@@ -74,11 +74,9 @@ public class Campfire : MonoBehaviour
         if (healRate > 0f && stat.Life < 100f)
             stat.Heal(healRate * Time.deltaTime);
 
-        // le feu est le seul endroit ou l'on peut secher
         stat.Dry(Time.deltaTime);
     }
 
-    // Rallumage : le foyer d'une clairiere resservira plusieurs fois dans un run.
     public void Relight()
     {
         left = burnTime;

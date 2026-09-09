@@ -172,8 +172,6 @@ public class HUD : MonoBehaviour
         UpdateColdTrend(PlayerStat.Instance.Cold);
     }
 
-    // Barre pleine, la vie fond, et rien ne l'indique : il n'y a aucune jauge de vie.
-    // On fait donc parler la jauge de froid elle-meme.
     private void UpdateFrozenWarning()
     {
         if (!coldColorSaved && coldValue != null) { coldValueColor = coldValue.color; coldColorSaved = true; }
@@ -203,9 +201,6 @@ public class HUD : MonoBehaviour
         frozenText.color = c;
     }
 
-    // La jauge dit ou on en est ; le chevron dit ce qui est en train d'arriver.
-    // C'est ce second signal qui rend l'abri comprehensible, parce qu'il bascule
-    // a l'instant meme ou l'on passe sous les arbres.
     private void UpdateColdTrend(float cold)
     {
         if (coldTrend == null) return;
@@ -218,7 +213,6 @@ public class HUD : MonoBehaviour
 
         if (coldSpeed > 5f)
         {
-            // noyade : la barre se remplit en une dizaine de secondes
             coldTrend.text = "▲▲▲";
             coldTrend.color = new Color(1f, 0.22f, 0.18f);
         }
@@ -244,8 +238,6 @@ public class HUD : MonoBehaviour
         }
     }
 
-    // Une seule fois, au moment ou la regle devient utile : le joueur a deja
-    // ressenti le vent, on ne fait que nommer ce qu'il a vu.
     private void UpdateShelterHint()
     {
         if (hintText == null) return;

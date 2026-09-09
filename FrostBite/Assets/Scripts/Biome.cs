@@ -1,7 +1,5 @@
 using UnityEngine;
 
-// Region nommee. En y entrant, son nom s'affiche a l'ecran.
-// Quand plusieurs se chevauchent, la plus prioritaire l'emporte.
 [DisallowMultipleComponent]
 public class Biome : MonoBehaviour
 {
@@ -17,9 +15,6 @@ public class Biome : MonoBehaviour
     public string Subtitle => subtitle;
     public int Priority => priority;
 
-    // Un trigger ne se declenche qu'au franchissement. Si le joueur demarre deja
-    // dedans, la region ne serait jamais enregistree : en sortant d'une zone de
-    // chasse, plus rien ne serait affiche.
     private void Start()
     {
         var stat = PlayerStat.Instance;

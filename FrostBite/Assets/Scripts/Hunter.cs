@@ -43,9 +43,6 @@ public class Hunter : MonoBehaviour
         Vector3 dir = AimDirection(spawnPoint);
         Vector3 origin = spawnPoint.position;
 
-        // A 150 m/s, une balle tiree de 300 m met 2 s a arriver : le joueur a le temps
-        // de marcher 6 m, bien plus que l'ecart de visee. On la fait donc apparaitre
-        // pres de lui, sur la meme ligne de tir, pour qu'elle arrive en une demi-seconde.
         if (bulletSpawnDistance > 0f && PlayerStat.Instance != null)
         {
             float toPlayer = Vector3.Distance(origin, PlayerStat.Instance.transform.position);
@@ -70,9 +67,6 @@ public class Hunter : MonoBehaviour
 
         if (Random.value >= lethalShotChance)
         {
-            // Le tireur vise volontairement a cote, a quelques metres du joueur :
-            // la balle le frole a coup sur, donc sifflement et secousse camera,
-            // sans que la mort dependre d'un tirage a chaque coup de feu.
             Vector3 dir = toPlayer.normalized;
             Vector3 right = Vector3.Cross(Vector3.up, dir).normalized;
             Vector3 up = Vector3.Cross(dir, right);
