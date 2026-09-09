@@ -1,10 +1,8 @@
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
+using System.Linq;
 
-// Pinceau de placement d'arbres.
-//   Tools > FrostBite > Tree Painter
-//   Clic gauche glisse = peindre, Maj + clic gauche = effacer, Alt = camera libre.
 public class TreePainter : EditorWindow
 {
     private enum Mode { GameObjects, ArbresDeTerrain }
@@ -12,9 +10,9 @@ public class TreePainter : EditorWindow
     private Mode mode = Mode.ArbresDeTerrain;
     private bool painting;
 
-    private GameObject prefab;
+    private readonly List<GameObject> prefabs = new List<GameObject>();
     private string parentName = "Trees";
-    private int prototypeIndex;
+    private readonly List<int> selectedPrototypes = new List<int>();
 
     private float radius = 30f;
     private float spacing = 3.2f;
@@ -38,7 +36,6 @@ public class TreePainter : EditorWindow
     private Vector3 lastPaintPos = Vector3.positiveInfinity;
     private Vector2 scroll;
 
-    // --- grille de hachage spatial : test d'ecart en O(1) au lieu de O(n) ---
     private readonly Dictionary<long, List<Vector2>> hash = new Dictionary<long, List<Vector2>>();
     private float hashCell = 1f;
 
@@ -51,9 +48,24 @@ public class TreePainter : EditorWindow
 
     private void OnEnable()
     {
-        if (prefab == null)
-            prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/TreeTerrain.prefab")
-                  ?? AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Tree.prefab");
+        if (prefabs.Count == 0)
+        {
+            string[] guids = AssetDatabase.FindAssets("Tree_ t:Prefab", new[] { "Assets/Prefabs" });
+            foreach (var guid in guids)
+            {
+                var go = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(guid));
+                if (go != null) prefabs.Add(go);
+            }
+            if (prefabs.Count == 0)
+            {
+                var fallback = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/TreeTerrain.prefab")
+                             ?? AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Tree.prefab");
+                if (fallback != null) prefabs.Add(fallback);
+            }
+        }
+
+        if (selectedPrototypes.Count == 0 && Terrain.activeTerrain != null && Terrain.activeTerrain.terrainData.treePrototypes.Length > 0)
+            selectedPrototypes.Add(0);
 
         SceneView.duringSceneGui -= OnSceneGUI;
         SceneView.duringSceneGui += OnSceneGUI;
@@ -84,21 +96,45 @@ public class TreePainter : EditorWindow
 
         if (mode == Mode.GameObjects)
         {
-            prefab = (GameObject)EditorGUILayout.ObjectField("Prefab", prefab, typeof(GameObject), false);
+            EditorGUILayout.LabelField("Variantes d'arbres", EditorStyles.boldLabel);
+            for (int i = 0; i < prefabs.Count; i++)
+            {
+                EditorGUILayout.BeginHorizontal();
+                prefabs[i] = (GameObject)EditorGUILayout.ObjectField(prefabs[i], typeof(GameObject), false);
+                if (GUILayout.Button("x", GUILayout.Width(22f))) { prefabs.RemoveAt(i); i--; }
+                EditorGUILayout.EndHorizontal();
+            }
+            if (GUILayout.Button("+ Ajouter une variante")) prefabs.Add(null);
             parentName = EditorGUILayout.TextField("Parent", parentName);
             registerInTreeWind = EditorGUILayout.Toggle("Inscrire dans TreeWind", registerInTreeWind);
-            EditorGUILayout.HelpBox("Vrais GameObjects : animes par TreeWind, mais un draw call chacun. A reserver aux abords des chemins, quelques centaines au maximum.", MessageType.Warning);
+            EditorGUILayout.HelpBox("Une variante est tiree au hasard a chaque arbre pose. Vrais GameObjects : animes par TreeWind, mais un draw call chacun. A reserver aux abords des chemins, quelques centaines au maximum.", MessageType.Warning);
         }
         else
         {
-            prototypeIndex = EditorGUILayout.IntField("Index du prototype", prototypeIndex);
-            EditorGUILayout.HelpBox("Instances de Terrain : instancing GPU et culling par distance. C'est le mode a utiliser pour la masse de la foret.", MessageType.Info);
+            EditorGUILayout.LabelField("Prototypes de terrain a peindre", EditorStyles.boldLabel);
+            var ter = Terrain.activeTerrain;
+            if (ter == null || ter.terrainData.treePrototypes.Length == 0)
+            {
+                EditorGUILayout.HelpBox("Aucun Terrain actif ou aucun prototype d'arbre sur le Terrain.", MessageType.Warning);
+            }
+            else
+            {
+                var protos = ter.terrainData.treePrototypes;
+                for (int i = 0; i < protos.Length; i++)
+                {
+                    bool on = selectedPrototypes.Contains(i);
+                    bool now = EditorGUILayout.ToggleLeft("[" + i + "] " + (protos[i].prefab ? protos[i].prefab.name : "null"), on);
+                    if (now && !on) selectedPrototypes.Add(i);
+                    else if (!now && on) selectedPrototypes.Remove(i);
+                }
+            }
+            EditorGUILayout.HelpBox("Coche plusieurs prototypes (ex: 7 et 8) pour qu'un pas au hasard entre eux soit tire a chaque pierre/arbre pose. Instances de Terrain : instancing GPU et culling par distance. C'est le mode a utiliser pour la masse de la foret.", MessageType.Info);
         }
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Pinceau", EditorStyles.boldLabel);
         radius = EditorGUILayout.Slider("Rayon", radius, 1f, 800f);
-        spacing = EditorGUILayout.Slider("Ecart minimum", spacing, 0.5f, 20f);
+        spacing = EditorGUILayout.Slider("Ecart minimum", spacing, 0.001f, 20f);
 
         fullFill = EditorGUILayout.Toggle("Remplissage complet", fullFill);
         if (fullFill)
@@ -109,7 +145,6 @@ public class TreePainter : EditorWindow
             strokeStep = EditorGUILayout.Slider("Pas du trace", strokeStep, 0.2f, 40f);
         }
 
-        // estimation de ce que va poser un clic
         float area = Mathf.PI * radius * radius;
         float perTree = spacing * spacing / (fullFill ? 0.82f : 0.7f);
         EditorGUILayout.LabelField(fullFill ? "Un clic posera" : "Densite visee",
@@ -174,7 +209,6 @@ public class TreePainter : EditorWindow
         }
         else if (e.type == EventType.MouseDrag)
         {
-            // en remplissage complet, un clic suffit : on ne repeint pas au glisse
             if (!fullFill && Vector3.Distance(point, lastPaintPos) >= strokeStep)
                 Stroke(point, erasing);
             e.Use();
@@ -195,7 +229,6 @@ public class TreePainter : EditorWindow
         else PaintTerrain(center);
     }
 
-    // ---------- grille de hachage ----------
 
     private static long Key(int cx, int cz) { return ((long)cx << 32) ^ (uint)cz; }
 
@@ -213,8 +246,6 @@ public class TreePainter : EditorWindow
         l.Add(p);
     }
 
-    // La cellule vaut l'ecart minimum, donc tout voisin plus proche que 'spacing'
-    // se trouve forcement dans les 9 cellules autour : 9 lookups au lieu de n comparaisons.
     private bool HashNear(Vector2 p)
     {
         int cx = Mathf.FloorToInt(p.x / hashCell), cz = Mathf.FloorToInt(p.y / hashCell);
@@ -231,7 +262,6 @@ public class TreePainter : EditorWindow
         return false;
     }
 
-    // Points candidats : grille jitteree pour un remplissage regulier, tirs aleatoires sinon.
     private List<Vector2> Candidates(Vector2 center)
     {
         var pts = new List<Vector2>();
@@ -265,11 +295,11 @@ public class TreePainter : EditorWindow
             "Poser", "Annuler");
     }
 
-    // ---------- pose ----------
 
     private void PaintObjects(Vector3 center)
     {
-        if (prefab == null) { Debug.LogWarning("Tree Painter : aucun prefab assigne."); return; }
+        var pool = prefabs.Where(p => p != null).ToList();
+        if (pool.Count == 0) { Debug.LogWarning("Tree Painter : aucune variante de prefab assignee."); return; }
 
         var cands = Candidates(new Vector2(center.x, center.z));
         if (!Confirm(cands.Count, "GameObjects (chacun coute un draw call, prefere le mode Terrain pour la masse)")) return;
@@ -302,6 +332,7 @@ public class TreePainter : EditorWindow
 
             pos.y += yOffset;
 
+            GameObject prefab = pool[Random.Range(0, pool.Count)];
             var g = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
             Quaternion rot = Quaternion.Euler(0f, Random.value * 360f, 0f);
             if (alignToNormal) rot = Quaternion.FromToRotation(Vector3.up, nrm) * rot;
@@ -329,10 +360,12 @@ public class TreePainter : EditorWindow
         var td = ter.terrainData;
         if (td.treePrototypes.Length == 0) { Debug.LogWarning("Tree Painter : le Terrain n'a aucun prototype d'arbre."); return; }
 
+        var pool = selectedPrototypes.Where(p => p >= 0 && p < td.treePrototypes.Length).ToList();
+        if (pool.Count == 0) { Debug.LogWarning("Tree Painter : coche au moins un prototype de terrain a peindre."); return; }
+
         var cands = Candidates(new Vector2(center.x, center.z));
         if (!Confirm(cands.Count, "arbres de terrain")) return;
 
-        int proto = Mathf.Clamp(prototypeIndex, 0, td.treePrototypes.Length - 1);
         Undo.RegisterCompleteObjectUndo(td, "Peindre arbres terrain");
 
         Vector3 tp = ter.transform.position;
@@ -364,7 +397,7 @@ public class TreePainter : EditorWindow
 
             var inst = new TreeInstance();
             inst.position = new Vector3(u, y / size.y, v);
-            inst.prototypeIndex = proto;
+            inst.prototypeIndex = pool[Random.Range(0, pool.Count)];
             inst.widthScale = s;
             inst.heightScale = s * Random.Range(stretchMin, stretchMax);
             inst.rotation = Random.value * 6.2832f;
@@ -384,7 +417,6 @@ public class TreePainter : EditorWindow
         if (added > 0) Debug.Log("Tree Painter : " + added + " arbres poses, " + list.Count + " au total sur le terrain.");
     }
 
-    // ---------- effacement ----------
 
     private void Erase(Vector3 center)
     {
@@ -454,7 +486,6 @@ public class TreePainter : EditorWindow
         }
     }
 
-    // ---------- utilitaires ----------
 
     private bool RayFiltered(Ray ray, Transform ignore, out RaycastHit best)
     {
@@ -564,8 +595,6 @@ public class TreePainter : EditorWindow
         so.ApplyModifiedProperties();
     }
 
-    // TreeWind parcourt tout son tableau a chaque refresh : un trou coute aussi cher
-    // qu'un vrai arbre, il faut donc le retirer des qu'on efface.
     private static int CleanTreeWind()
     {
         var tw = Object.FindFirstObjectByType<TreeWind>();
