@@ -9,6 +9,8 @@ public class Campfire : MonoBehaviour
     [SerializeField] float burnTime = 20f;
     [SerializeField] float warmRate = 3f;
     [SerializeField] float calmRate = 3.5f;
+    [Tooltip("Vie rendue par seconde. Sans ca, les blessures par balle s'accumulent sans aucun recours.")]
+    [SerializeField] float healRate = 4f;
     [SerializeField] float coldFloor = 0f;
     [SerializeField] float stressFloor = 0f;
 
@@ -68,6 +70,22 @@ public class Campfire : MonoBehaviour
             drop = Mathf.Min(calmRate * Time.deltaTime, stat.Stress - stressFloor);
             stat.Calm(drop);
         }
+
+        if (healRate > 0f && stat.Life < 100f)
+            stat.Heal(healRate * Time.deltaTime);
+
+        // le feu est le seul endroit ou l'on peut secher
+        stat.Dry(Time.deltaTime);
+    }
+
+    // Rallumage : le foyer d'une clairiere resservira plusieurs fois dans un run.
+    public void Relight()
+    {
+        left = burnTime;
+        lit = true;
+
+        if (glow != null) glow.enabled = true;
+        if (fireAudio != null && !fireAudio.isPlaying) fireAudio.Play();
     }
 
     void Out()

@@ -92,7 +92,7 @@ public class CampfireCraft : MonoBehaviour
         if (Cast(origin, view.transform.forward, range))
         {
             aim = hit.point;
-            ok = hit.normal.y >= flatEnough && Reach(aim) <= range;
+            ok = Allowed(hit.normal);
             return;
         }
 
@@ -101,8 +101,26 @@ public class CampfireCraft : MonoBehaviour
         if (Cast(aim + Vector3.up * dropHeight, Vector3.down, dropHeight * 2f))
         {
             aim = hit.point;
-            ok = hit.normal.y >= flatEnough && Reach(aim) <= range;
+            ok = Allowed(hit.normal);
         }
+    }
+
+    // Un feu ne se rallume que dans une clairiere : sol plat, a portee,
+    // dans le rayon d'un CampfireSpot, et pas deja allume.
+    bool Allowed(Vector3 normal)
+    {
+        if (normal.y < flatEnough || Reach(aim) > range) return false;
+
+        CampfireSpot spot = CampfireSpot.Nearest(aim);
+        if (spot == null || spot.Lit) return false;
+
+        Vector3 d = aim - spot.transform.position;
+        d.y = 0f;
+        if (d.magnitude > spot.Radius) return false;
+
+        // le fantome se cale sur le foyer : c'est lui qu'on va rallumer
+        aim = spot.transform.position;
+        return true;
     }
 
     float Reach(Vector3 point)
@@ -145,11 +163,13 @@ public class CampfireCraft : MonoBehaviour
     {
         progress = 0f;
 
-        if (firePrefab == null || Inventory.Instance == null) return;
+        CampfireSpot spot = CampfireSpot.Nearest(aim);
+        if (spot == null || spot.Lit || Inventory.Instance == null) return;
         if (!Inventory.Instance.Take(woodCost)) return;
 
-        Instantiate(firePrefab, aim, Quaternion.identity);
+        // On rallume le foyer existant au lieu d'en empiler un nouveau par-dessus.
+        spot.Light();
 
-        if (SoundManager.Instance != null) SoundManager.Instance.PlayCraft(aim);
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayCraft(spot.transform.position);
     }
 }

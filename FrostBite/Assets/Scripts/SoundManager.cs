@@ -10,6 +10,9 @@ public class SoundManager : MonoBehaviour
     [SerializeField] AudioClip forestAmbiance;
     [SerializeField] AudioClip breathing;
     [SerializeField] AudioClip hunterShoot;
+    [Tooltip("Sifflement d'une balle qui passe pres du joueur. A defaut, le son de tir est reutilise.")]
+    [SerializeField] AudioClip bulletWhiz;
+    [SerializeField] [Range(0f, 1f)] float whizVolume = 0.75f;
     [SerializeField] AudioClip pickup;
     [SerializeField] AudioClip craft;
     [SerializeField] AudioClip wolfTrapSnap;
@@ -45,6 +48,11 @@ public class SoundManager : MonoBehaviour
     public void PlayHunterShot(Vector3 position)
     {
         PlayFar(hunterShoot, position, sfxVolume, shotMinDistance, shotMaxDistance);
+    }
+
+    public void PlayWhiz(Vector3 position)
+    {
+        PlayAt(bulletWhiz != null ? bulletWhiz : hunterShoot, position, whizVolume);
     }
 
     public void PlayPickup(Vector3 position)

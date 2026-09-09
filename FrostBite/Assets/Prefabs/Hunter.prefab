@@ -49,3 +49,7 @@ MonoBehaviour:
   muzzlePrefab: {fileID: 0}
   autoFireOnStart: 0
   delayBeforeFirstShot: 5
+  aimAtPlayer: 1
+  missDistance: {x: 1.2, y: 4}
+  lethalShotChance: 0.15
+  bulletSpawnDistance: 45

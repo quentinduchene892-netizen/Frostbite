@@ -1,4 +1,4 @@
-using Unity.Cinemachine;
+﻿using Unity.Cinemachine;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -381,7 +381,7 @@ public class CameraPlayer : MonoBehaviour
     {
         if (SoundManager.Instance == null) return;
 
-        onWood = Physics.Raycast(transform.position, Vector3.down, out footHit, footRay) && footHit.collider.CompareTag(woodTag);
+        onWood = Physics.Raycast(transform.position, Vector3.down, out footHit, footRay, ~0, QueryTriggerInteraction.Ignore) && footHit.collider.CompareTag(woodTag);
 
         SoundManager.Instance.PlayFootstep(transform.position, onWood);
     }

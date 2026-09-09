@@ -19,6 +19,12 @@ public class HUD : MonoBehaviour
     [SerializeField] private RectTransform coldGhost;
     [SerializeField] private TMP_Text stressValue;
     [SerializeField] private TMP_Text coldValue;
+    [Tooltip("Chevron indiquant la VITESSE du froid, pas son niveau : c'est elle qui change quand on s'abrite.")]
+    [SerializeField] private TMP_Text coldTrend;
+    [SerializeField] private TMP_Text hintText;
+    [Tooltip("Avertissement affiche tant que la barre de froid est pleine et que la vie fond.")]
+    [SerializeField] private TMP_Text frozenText;
+    [SerializeField] private float hintDuration = 5f;
     [SerializeField] private float ghostSpeed = 0.3f;
     [SerializeField] private CampfireCraft craft;
     [SerializeField] private Image craftBar;
@@ -45,6 +51,14 @@ public class HUD : MonoBehaviour
     private float coldPart;
     private bool isRunning;
     private bool showBar;
+    private float lastCold;
+    private float coldSpeed;
+    private bool coldReady;
+    private WindStorm storm;
+    private bool hintShown;
+    private float hintLeft;
+    private Color coldValueColor;
+    private bool coldColorSaved;
     private bool showDeath;
     private Vector2 edge;
 
@@ -52,6 +66,9 @@ public class HUD : MonoBehaviour
     {
         if (craft == null) craft = FindFirstObjectByType<CampfireCraft>();
         if (gather == null) gather = FindFirstObjectByType<WoodGather>();
+        if (storm == null) storm = FindFirstObjectByType<WindStorm>();
+
+        if (hintText != null) hintText.gameObject.SetActive(false);
 
         if (progressBarWolfTrap == null)
         {
@@ -77,6 +94,7 @@ public class HUD : MonoBehaviour
         UpdateStatBars();
         UpdateCraft();
         UpdateDeathScreen();
+        UpdateShelterHint();
 
         if (PlayerStat.Instance != null && (PlayerStat.Instance.Fainted || PlayerStat.Instance.Dead))
         {
@@ -140,6 +158,8 @@ public class HUD : MonoBehaviour
         if (stressFill != null) stressFill.color = Color.Lerp(stressLow, stressHigh, stressPart);
         if (coldFill != null) coldFill.color = Color.Lerp(coldLow, coldHigh, coldPart);
 
+        UpdateFrozenWarning();
+
         stressGhostPart = TrailTowards(stressGhostPart, stressPart);
         coldGhostPart = TrailTowards(coldGhostPart, coldPart);
 
@@ -148,6 +168,107 @@ public class HUD : MonoBehaviour
 
         if (stressValue != null) stressValue.text = Mathf.RoundToInt(stressPart * 100f).ToString();
         if (coldValue != null) coldValue.text = Mathf.RoundToInt(coldPart * 100f).ToString();
+
+        UpdateColdTrend(PlayerStat.Instance.Cold);
+    }
+
+    // Barre pleine, la vie fond, et rien ne l'indique : il n'y a aucune jauge de vie.
+    // On fait donc parler la jauge de froid elle-meme.
+    private void UpdateFrozenWarning()
+    {
+        if (!coldColorSaved && coldValue != null) { coldValueColor = coldValue.color; coldColorSaved = true; }
+
+        bool frozen = PlayerStat.Instance != null && PlayerStat.Instance.Frozen && !PlayerStat.Instance.Dead;
+        float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 9f);
+
+        if (frozen)
+        {
+            Color hot = Color.Lerp(new Color(0.88f, 0.13f, 0.10f), Color.white, pulse);
+            if (coldFill != null) coldFill.color = hot;
+            if (coldValue != null) coldValue.color = hot;
+        }
+        else if (coldValue != null && coldColorSaved)
+        {
+            coldValue.color = coldValueColor;
+        }
+
+        if (frozenText == null) return;
+
+        if (frozenText.gameObject.activeSelf != frozen) frozenText.gameObject.SetActive(frozen);
+        if (!frozen) return;
+
+        frozenText.text = "VOUS GELEZ";
+        Color c = frozenText.color;
+        c.a = 0.55f + 0.45f * pulse;
+        frozenText.color = c;
+    }
+
+    // La jauge dit ou on en est ; le chevron dit ce qui est en train d'arriver.
+    // C'est ce second signal qui rend l'abri comprehensible, parce qu'il bascule
+    // a l'instant meme ou l'on passe sous les arbres.
+    private void UpdateColdTrend(float cold)
+    {
+        if (coldTrend == null) return;
+
+        if (!coldReady) { lastCold = cold; coldReady = true; }
+
+        float instant = (cold - lastCold) / Mathf.Max(Time.deltaTime, 0.0001f);
+        lastCold = cold;
+        coldSpeed = Mathf.Lerp(coldSpeed, instant, 1f - Mathf.Exp(-6f * Time.deltaTime));
+
+        if (coldSpeed > 5f)
+        {
+            // noyade : la barre se remplit en une dizaine de secondes
+            coldTrend.text = "▲▲▲";
+            coldTrend.color = new Color(1f, 0.22f, 0.18f);
+        }
+        else if (coldSpeed > 1f)
+        {
+            coldTrend.text = "▲▲";
+            coldTrend.color = new Color(0.95f, 0.45f, 0.30f);
+        }
+        else if (coldSpeed > 0.15f)
+        {
+            coldTrend.text = "▲";
+            coldTrend.color = new Color(0.95f, 0.72f, 0.35f);
+        }
+        else if (coldSpeed < -0.15f)
+        {
+            coldTrend.text = "▼";
+            coldTrend.color = new Color(0.55f, 0.82f, 1f);
+        }
+        else
+        {
+            coldTrend.text = "–";
+            coldTrend.color = new Color(0.75f, 0.78f, 0.82f);
+        }
+    }
+
+    // Une seule fois, au moment ou la regle devient utile : le joueur a deja
+    // ressenti le vent, on ne fait que nommer ce qu'il a vu.
+    private void UpdateShelterHint()
+    {
+        if (hintText == null) return;
+
+        if (!hintShown && storm != null && storm.Power > 0.6f && storm.Exposure > 0.8f)
+        {
+            hintShown = true;
+            hintLeft = hintDuration;
+            hintText.text = "Le vent te transperce. Abrite-toi sous les arbres.";
+        }
+
+        if (hintLeft <= 0f)
+        {
+            if (hintText.gameObject.activeSelf) hintText.gameObject.SetActive(false);
+            return;
+        }
+
+        if (!hintText.gameObject.activeSelf) hintText.gameObject.SetActive(true);
+
+        hintLeft -= Time.deltaTime;
+        Color c = hintText.color;
+        c.a = Mathf.Clamp01(hintLeft);
+        hintText.color = c;
     }
 
     private void UpdateCraft()

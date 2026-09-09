@@ -41,6 +41,7 @@ Shader "FrostBite/RiverWater"
             #pragma vertex vert
             #pragma fragment frag
             #pragma target 3.0
+            #pragma multi_compile_fog
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -136,6 +137,7 @@ Shader "FrostBite/RiverWater"
                 float3 positionWS : TEXCOORD0;
                 float4 screenPos  : TEXCOORD1;
                 float2 flowBase   : TEXCOORD2;
+                float  fogCoord   : TEXCOORD3;
             };
 
             Varyings vert(Attributes IN)
@@ -148,6 +150,7 @@ Shader "FrostBite/RiverWater"
                 OUT.positionWS = posWS;
                 OUT.positionCS = TransformWorldToHClip(posWS);
                 OUT.screenPos  = ComputeScreenPos(OUT.positionCS);
+                OUT.fogCoord   = ComputeFogFactor(OUT.positionCS.z);
                 return OUT;
             }
 
@@ -196,6 +199,9 @@ Shader "FrostBite/RiverWater"
                 col += SampleSH(nrm) * body * 0.35;
 
                 alpha = saturate(alpha + foam * 0.8 + fres * 0.2);
+
+                // Sans ca, la riviere reste nette a 400 m et traverse la tempete de neige.
+                col = MixFog(col, IN.fogCoord);
 
                 return half4(col, alpha);
             }

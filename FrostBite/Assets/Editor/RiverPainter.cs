@@ -535,6 +535,12 @@ public class RiverPainter : EditorWindow
         vol.transform.SetParent(root.transform, false);
         vol.AddComponent<ColdWater>();
 
+        // Sans Rigidbody, les OnTriggerEnter des boites enfants partent vers les
+        // enfants eux-memes et ColdWater ne recoit jamais rien.
+        var rb = vol.AddComponent<Rigidbody>();
+        rb.isKinematic = true;
+        rb.useGravity = false;
+
         const int CHUNK = 6;
         for (int i = 0; i < nodes.Count - 1; i += CHUNK)
         {

@@ -18,6 +18,12 @@ public class WindStorm : MonoBehaviour
     [SerializeField] float blowMax = 25f;
     [SerializeField] float coldRate = 2.5f;
     [SerializeField] float stressRate = 2.5f;
+
+    [Header("Abri sous les arbres")]
+    [Tooltip("Part de la tempete annulee sous couvert dense.")]
+    [Range(0f, 1f)] [SerializeField] float shelterStrength = 0.75f;
+    [Tooltip("Temps de bascule abri / decouvert. Court volontairement : c'est le contraste qui rend la mecanique lisible.")]
+    [SerializeField] float shelterResponse = 0.8f;
     [SerializeField] float rise = 0.12f;
     [SerializeField] float fall = 0.35f;
     [SerializeField] float snowRate = 900f;
@@ -45,8 +51,14 @@ public class WindStorm : MonoBehaviour
     bool hasSnow;
     bool hasGust;
 
+    private float shelter;
+    private float exposure = 1f;
+
     public float Power => power;
     public bool Inside => inside;
+    // 1 = plein vent, 0 = totalement protege.
+    public float Exposure => exposure;
+    public float Shelter => shelter;
 
     public bool On
     {
@@ -112,14 +124,28 @@ public class WindStorm : MonoBehaviour
         goal = on && inside ? 1f : 0f;
         power = Mathf.MoveTowards(power, goal, (goal > power ? rise : fall) * Time.deltaTime);
 
+        UpdateShelter();
+
         Blow();
         Fog();
         Sound();
 
         if (power <= 0f || stat == null) return;
 
-        stat.AddCold(coldRate * power * Time.deltaTime);
-        stat.AddStress(stressRate * power * Time.deltaTime);
+        stat.AddCold(coldRate * power * exposure * Time.deltaTime);
+        stat.AddStress(stressRate * power * exposure * Time.deltaTime);
+    }
+
+    // La foret est un abri : sous les arbres, la tempete perd l'essentiel de sa morsure.
+    void UpdateShelter()
+    {
+        float target = 0f;
+
+        if (stat != null && ShelterMap.Instance != null && ShelterMap.Instance.Ready)
+            target = ShelterMap.Instance.Shelter(stat.transform.position);
+
+        shelter = Mathf.MoveTowards(shelter, target, Time.deltaTime / Mathf.Max(shelterResponse, 0.05f));
+        exposure = 1f - shelter * shelterStrength;
     }
 
     void Turn()
@@ -141,19 +167,19 @@ public class WindStorm : MonoBehaviour
         if (hasSnow)
         {
             snow.transform.position = stat.transform.position + Vector3.up * snowHeight;
-            snowEmission.rateOverTime = snowRate * power;
+            snowEmission.rateOverTime = snowRate * power * exposure;
         }
 
         if (hasGust)
         {
             gust.transform.position = stat.transform.position + Vector3.up * gustHeight;
-            gustEmission.rateOverTime = gustRate * power;
+            gustEmission.rateOverTime = gustRate * power * exposure;
         }
     }
 
     void Sound()
     {
-        if (stormAudio != null) stormAudio.volume = power;
+        if (stormAudio != null) stormAudio.volume = power * exposure;
     }
 
     void Fog()

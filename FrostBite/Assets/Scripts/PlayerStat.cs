@@ -20,9 +20,19 @@ public class PlayerStat : MonoBehaviour
     [SerializeField] float coldStress = 1f;
     [SerializeField] float faintTime = 4f;
     [SerializeField] float freezeHit = 8f;
+    [Tooltip("Degats d'une balle. A 100, une touche tue sur le coup.")]
+    [SerializeField] float gunshotDamage = 25f;
+    [SerializeField] float gunshotStress = 20f;
+    [Header("Trempe")]
+    [Tooltip("Froid par seconde tant qu'on est mouille, meme hors de l'eau.")]
+    [SerializeField] float wetColdRate = 6f;
+    [Tooltip("Secondes au feu pour secher completement.")]
+    [SerializeField] float dryTime = 5f;
     [SerializeField] float deathDelay = 2f;
 
     float deathLeft;
+    float waterSlow = 1f;
+    float wetness;
     float mult;
     float over;
     float slow;
@@ -43,6 +53,8 @@ public class PlayerStat : MonoBehaviour
     public bool Frozen => frozen;
     public bool Shot => shot;
     public bool Dead => dead;
+    public bool Wet => wetness > 0.01f;
+    public float Wetness => wetness;
 
     public string Cause => shot ? "Vous avez été tué par balle."
         : fainted && frozen ? "Vous vous êtes évanoui et vous êtes mort de froid."
@@ -79,7 +91,8 @@ public class PlayerStat : MonoBehaviour
 
         if (!fainted && stress >= maxStress) fainted = true;
 
-        cold = Mathf.Clamp(cold + coldRate * Time.deltaTime, 0f, maxCold);
+        // Sortir de l'eau ne suffit pas : tant qu'on est trempe, le froid continue de grimper.
+        cold = Mathf.Clamp(cold + (coldRate + wetColdRate * wetness) * Time.deltaTime, 0f, maxCold);
         over = Mathf.InverseLerp(coldPoint, maxCold, cold);
         stress = Mathf.Clamp(stress + (coldStress * over - calmRate) * Time.deltaTime, 0f, maxStress);
 
@@ -93,7 +106,25 @@ public class PlayerStat : MonoBehaviour
 
         if (dead) return;
 
-        slow = fainted ? 0f : Mathf.Lerp(1f, slowFloor, over);
+        slow = fainted ? 0f : Mathf.Lerp(1f, slowFloor, over) * waterSlow;
+    }
+
+    // Patauger dans l'eau glacee doit se sentir dans les jambes, pas seulement dans la jauge.
+    public void Soak()
+    {
+        wetness = 1f;
+    }
+
+    // Appele par le feu de camp : c'est le seul moyen de secher.
+    public void Dry(float seconds)
+    {
+        if (wetness <= 0f) return;
+        wetness = Mathf.Clamp01(wetness - seconds / Mathf.Max(dryTime, 0.01f));
+    }
+
+    public void SetWaterSlow(float value)
+    {
+        waterSlow = Mathf.Clamp01(value);
     }
 
     public void AddStress(float amount)
@@ -132,8 +163,11 @@ public class PlayerStat : MonoBehaviour
     {
         if (dead) return;
 
-        shot = true;
-        Hurt(maxLife);
+        AddStress(gunshotStress);
+        Hurt(gunshotDamage);
+
+        // La cause de mort ne doit dire "tue par balle" que si c'est bien la balle qui a fini le travail.
+        if (life <= 0f) shot = true;
     }
 
     public void Hurt(float amount)
@@ -158,6 +192,8 @@ public class PlayerStat : MonoBehaviour
         stress = 0f;
         cold = 0f;
         slow = 1f;
+        waterSlow = 1f;
+        wetness = 0f;
         fainted = false;
         frozen = false;
         shot = false;
