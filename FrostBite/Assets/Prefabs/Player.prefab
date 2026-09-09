@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 4057843715335324704}
   - component: {fileID: 6177436797677242013}
   - component: {fileID: 93062687781029896}
+  - component: {fileID: 7078413267730586261}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -113,6 +114,24 @@ MonoBehaviour:
   fovSmooth: 4
   dipSize: 0.11
   dipSmooth: 9
+  shakeFade: 2.2
+  shakeSize: 0.085
+  shakeRoll: 5
+  shakeRate: 34
+  woodTag: Wood
+  footRay: 1.5
+  logSpeedMultiplier: 0.55
+  logLeanSpeedMin: 4
+  logLeanSpeedMax: 8
+  logCorrectPower: 70
+  logRecoverSpeed: 6
+  logFallThreshold: 35
+  logPushForce: 2.5
+  logPushDecay: 6
+  logPushCooldown: 0.6
+  logKickOnPush: 0.35
+  logDutchMult: 0.4
+  logInvertControls: 0
 --- !u!114 &3985843512759883672
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -139,6 +158,10 @@ MonoBehaviour:
   coldStress: 1
   faintTime: 4
   freezeHit: 8
+  gunshotDamage: 25
+  gunshotStress: 20
+  wetColdRate: 6
+  dryTime: 5
   deathDelay: 2
 --- !u!114 &4057843715335324704
 MonoBehaviour:
@@ -194,6 +217,23 @@ MonoBehaviour:
   ground:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &7078413267730586261
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 31641029782447786}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1838820344481004d824f8d1b2a95777, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ColdVignette
+  coldEffectMaterial: {fileID: 0}
+  intensityRef: Intensity
+  smooth: 4
+  minIntensity: 0
+  maxIntensity: 1
 --- !u!1 &3682699508411479624
 GameObject:
   m_ObjectHideFlags: 0
