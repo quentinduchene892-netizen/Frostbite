@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -9,7 +8,6 @@ public class HUD : MonoBehaviour
     [SerializeField] private Slider coldBar;
     [SerializeField] private GameObject deathScreen;
     [SerializeField] private TMP_Text deathText;
-    [SerializeField] private GameObject alertText;
     [SerializeField] private Image stressFill;
     [SerializeField] private Image coldFill;
     [SerializeField] private Color stressLow = new Color(0.35f, 0.11f, 0.10f, 1f);
@@ -28,14 +26,34 @@ public class HUD : MonoBehaviour
     [SerializeField] private float hintDuration = 5f;
     [SerializeField] private float ghostSpeed = 0.3f;
     [SerializeField] private CampfireCraft craft;
-    [SerializeField] private Image craftBar;
     [SerializeField] private TMP_Text woodValue;
     [SerializeField] private WoodGather gather;
-    [SerializeField] private Image pickupBar;
     [SerializeField] private Image crosshair;
-    [SerializeField] private Color aimIdle = new Color(1f, 1f, 1f, 0.32f);
-    [SerializeField] private Color aimReady = new Color(1f, 0.70f, 0.34f, 0.90f);
-    [SerializeField] private Image progressBarWolfTrap;
+
+    [Header("Anneau d'interaction")]
+    [Tooltip("Un seul anneau pose sur le viseur pour les deux gestes : il annonce la cible, puis se remplit au maintien.")]
+    [SerializeField] private CanvasGroup interactRing;
+    [SerializeField] private Image interactTrack;
+    [SerializeField] private Image interactFill;
+    [Tooltip("La touche a tenir, posee au centre de l'anneau.")]
+    [SerializeField] private TMP_Text interactKey;
+    [Tooltip("Ce que le geste coute ou rapporte, pose sous l'anneau. Vide pour le piege, qui ne coute rien.")]
+    [SerializeField] private TMP_Text interactCount;
+    [SerializeField] private Color ringWood = new Color(0.72f, 0.86f, 0.62f, 1f);
+    [SerializeField] private Color ringFire = new Color(1f, 0.62f, 0.28f, 1f);
+    [Tooltip("Teinte du remplissage quand il reflue : sans elle, un maintien interrompu ne se voit pas.")]
+    [SerializeField] private Color ringDrop = new Color(0.62f, 0.36f, 0.33f, 1f);
+    [Tooltip("Teinte quand on vise le foyer sans assez de bois.")]
+    [SerializeField] private Color ringShort = new Color(0.88f, 0.28f, 0.20f, 1f);
+    [Tooltip("Teinte du QTE du piege.")]
+    [SerializeField] private Color ringTrap = new Color(1f, 0.80f, 0.20f, 1f);
+
+    [Header("Gain de bois")]
+    [Tooltip("Petit +N qui monte pres du compteur : sans lui le total saute en silence dans un coin.")]
+    [SerializeField] private TMP_Text woodGain;
+    [SerializeField] private float woodGainTime = 1.1f;
+    [SerializeField] private float woodGainRise = 24f;
+    [Header("Piege a loup")]
     [SerializeField] private float startProgress = 0.3f;
     [SerializeField] private float maxProgressBarWolfTrapProgress = 1f;
     [SerializeField] private float fillPerPressMin = 0.08f;
@@ -55,23 +73,16 @@ public class HUD : MonoBehaviour
     [SerializeField] private Color staminaLow = new Color(0.85f, 0.55f, 0.18f, 1f);
     [SerializeField] private Color staminaSpent = new Color(0.88f, 0.22f, 0.16f, 1f);
 
-    [Header("Mash Ring (indicateur de spam)")]
-    [Tooltip("RectTransform de l'anneau qui pulse pour indiquer qu'il faut spam la touche.")]
-    [SerializeField] private RectTransform mashRing;
-    [SerializeField] private Image mashRingImage;
+    [Tooltip("Periode du battement de l'anneau pendant le QTE : c'est lui qui dit de marteler plutot que de maintenir.")]
     [SerializeField] private float mashPulseDuration = 0.5f;
-    [SerializeField] private float mashPulseMaxScale = 1.6f;
-    [SerializeField] private Color mashRingColor = new Color(1f, 0.8f, 0.2f, 1f);
+    [SerializeField] private float mashPulseScale = 1.18f;
 
-    [Header("Menu Pause (slide)")]
-    [SerializeField] private RectTransform menuPanel;
-    [SerializeField] private Vector2 posVisible = new Vector2(0, 0);
-    [SerializeField] private Vector2 posCachee = new Vector2(-500, 0);
-    [SerializeField] private float dureeSlide = 0.3f;
-    [SerializeField] private AnimationCurve courbeSlide = AnimationCurve.EaseInOut(0, 0, 1, 1);
-
-    private bool menuOuvert = false;
-    private Coroutine slideCoroutine;
+    [Header("Rappel des deplacements")]
+    [Tooltip("Pastilles de touches affichees au spawn, dans le meme style que l'anneau d'interaction.")]
+    [SerializeField] private CanvasGroup spawnHint;
+    [Tooltip("Duree du rappel des deplacements au demarrage.")]
+    [SerializeField] private float spawnPromptTime = 8f;
+    [SerializeField] private float promptFade = 5f;
 
     public bool isWolfTrapTriggered = false;
     public bool isWolfTrapActivated = false;
@@ -85,7 +96,6 @@ public class HUD : MonoBehaviour
     private float stressPart;
     private float coldPart;
     private bool isRunning;
-    private bool showBar;
     private float lastCold;
     private float coldSpeed;
     private bool coldReady;
@@ -97,6 +107,13 @@ public class HUD : MonoBehaviour
     private bool showDeath;
     private Vector2 edge;
     private float mashPulseTimer;
+    private float spawnPromptLeft;
+    private float lastFill;
+    private Color crossTint;
+    private int lastWood;
+    private bool woodReady;
+    private float woodGainLeft;
+    private Vector2 woodGainHome;
 
     void Start()
     {
@@ -113,13 +130,15 @@ public class HUD : MonoBehaviour
 
         PlaceRestMark();
 
-        if (hintText != null) hintText.gameObject.SetActive(false);
+        if (crosshair != null) crossTint = crosshair.color;
 
-        if (progressBarWolfTrap == null)
+        if (woodGain != null)
         {
-            Debug.LogError("progressBarWolfTrap n'est pas assignée dans l'inspecteur.", this);
-            return;
+            woodGainHome = woodGain.rectTransform.anchoredPosition;
+            woodGain.gameObject.SetActive(false);
         }
+
+        if (hintText != null) hintText.gameObject.SetActive(false);
 
         if (maxProgressBarWolfTrapProgress <= 0f)
         {
@@ -127,27 +146,17 @@ public class HUD : MonoBehaviour
             maxProgressBarWolfTrapProgress = 1f;
         }
 
-        progressBarWolfTrap.gameObject.SetActive(false);
-
-        if (mashRing != null) mashRing.gameObject.SetActive(false);
-
-        if (alertText != null) alertText.SetActive(false);
-
-        if (menuPanel != null) menuPanel.anchoredPosition = posCachee;
+        spawnPromptLeft = spawnPromptTime;
     }
 
     void Update()
     {
-        if (InputManager.Instance != null && InputManager.Instance.HelpMenuPressed)
-        {
-            ToggleMenu();
-        }
-
-        if (alertText != null && alertText.activeSelf != isRunning) alertText.SetActive(isRunning);
-
         UpdateStatBars();
         UpdateStamina();
+        UpdatePrompt();
+        UpdateInteract();
         UpdateCraft();
+        UpdateWoodGain();
         UpdateDeathScreen();
         UpdateShelterHint();
 
@@ -157,19 +166,13 @@ public class HUD : MonoBehaviour
             return;
         }
 
-        if (progressBarWolfTrap == null) return;
-
         if (isWolfTrapTriggered && !isRunning)
         {
             isWolfTrapTriggered = false;
             StartWolfTrapQTE();
         }
 
-        if (!isRunning)
-        {
-            UpdateMashRing();
-            return;
-        }
+        if (!isRunning) return;
 
         currentProgress -= drainSpeed * Time.deltaTime;
 
@@ -178,44 +181,11 @@ public class HUD : MonoBehaviour
 
         currentProgress = Mathf.Clamp(currentProgress, 0f, maxProgressBarWolfTrapProgress);
 
-        UpdateProgressBar();
-        UpdateMashRing();
-
         if (currentProgress < maxProgressBarWolfTrapProgress) return;
 
         isWolfTrapActivated = true;
         isRunning = false;
-        progressBarWolfTrap.gameObject.SetActive(false);
         OnWolfTrapActivated();
-    }
-
-    public void ToggleMenu()
-    {
-        menuOuvert = !menuOuvert;
-
-        if (slideCoroutine != null)
-            StopCoroutine(slideCoroutine);
-
-        Vector2 cible = menuOuvert ? posVisible : posCachee;
-        slideCoroutine = StartCoroutine(SlideMenuVers(cible));
-    }
-
-    private IEnumerator SlideMenuVers(Vector2 cible)
-    {
-        if (menuPanel == null) yield break;
-
-        Vector2 depart = menuPanel.anchoredPosition;
-        float temps = 0f;
-
-        while (temps < dureeSlide)
-        {
-            temps += Time.deltaTime;
-            float t = courbeSlide.Evaluate(temps / dureeSlide);
-            menuPanel.anchoredPosition = Vector2.Lerp(depart, cible, t);
-            yield return null;
-        }
-
-        menuPanel.anchoredPosition = cible;
     }
 
     public void StartWolfTrapQTE()
@@ -223,46 +193,6 @@ public class HUD : MonoBehaviour
         currentProgress = startProgress;
         isRunning = true;
         isWolfTrapActivated = false;
-        progressBarWolfTrap.gameObject.SetActive(true);
-        UpdateProgressBar();
-    }
-
-    private void UpdateProgressBar()
-    {
-        if (progressBarWolfTrap == null || maxProgressBarWolfTrapProgress <= 0f) return;
-
-        progressBarWolfTrap.fillAmount = currentProgress / maxProgressBarWolfTrapProgress;
-    }
-
-    private void UpdateMashRing()
-    {
-        if (mashRing == null) return;
-
-        bool shouldShow = isRunning;
-
-        if (mashRing.gameObject.activeSelf != shouldShow)
-            mashRing.gameObject.SetActive(shouldShow);
-
-        if (!shouldShow)
-        {
-            mashPulseTimer = 0f;
-            return;
-        }
-
-        mashPulseTimer += Time.deltaTime;
-
-        // Boucle sur la durée d'un pulse
-        float t = (mashPulseTimer % mashPulseDuration) / mashPulseDuration;
-
-        float scale = Mathf.Lerp(1f, mashPulseMaxScale, t);
-        mashRing.localScale = new Vector3(scale, scale, 1f);
-
-        if (mashRingImage != null)
-        {
-            Color c = mashRingColor;
-            c.a = Mathf.Lerp(mashRingColor.a, 0f, t); // fade out en grandissant
-            mashRingImage.color = c;
-        }
     }
 
     private void UpdateStatBars()
@@ -434,16 +364,149 @@ public class HUD : MonoBehaviour
         hintText.color = c;
     }
 
+    private void UpdatePrompt()
+    {
+        if (spawnHint == null) return;
+
+        if (spawnPromptLeft > 0f)
+        {
+            // Des que le joueur bouge, le rappel n'a plus rien a lui apprendre : il degage.
+            if (InputManager.Instance != null && InputManager.Instance.Move.sqrMagnitude > 0.01f)
+                spawnPromptLeft = 0f;
+            else
+                spawnPromptLeft -= Time.deltaTime;
+        }
+
+        bool show = spawnPromptLeft > 0f && !isRunning
+            && (PlayerStat.Instance == null || (!PlayerStat.Instance.Fainted && !PlayerStat.Instance.Dead));
+
+        spawnHint.alpha = Mathf.MoveTowards(spawnHint.alpha, show ? 1f : 0f, promptFade * Time.deltaTime);
+
+        bool alive = spawnHint.alpha > 0.001f;
+
+        if (spawnHint.gameObject.activeSelf != alive) spawnHint.gameObject.SetActive(alive);
+    }
+
     private void UpdateCraft()
     {
         if (woodValue != null && Inventory.Instance != null)
             woodValue.text = Inventory.Instance.Wood.ToString();
+    }
 
+    private void UpdateInteract()
+    {
+        if (interactRing == null) return;
+
+        // Le piege passe devant : on ne vise plus rien quand une machoire vous tient la jambe.
+        bool trap = isRunning;
+        bool wood = !trap && gather != null && gather.Aimed;
+        bool fire = !trap && !wood && craft != null && craft.Aimed;
+        bool on = trap || wood || fire;
+
+        interactRing.alpha = Mathf.MoveTowards(interactRing.alpha, on ? 1f : 0f, 9f * Time.deltaTime);
+
+        // Le point de visee s'efface derriere l'anneau : deux reperes au meme endroit se genent.
         if (crosshair != null)
-            crosshair.color = craft != null && craft.Ready ? aimReady : aimIdle;
+        {
+            Color c = crossTint;
+            c.a = crossTint.a * (1f - interactRing.alpha);
+            crosshair.color = c;
+        }
 
-        Fill(craftBar, craft == null ? 0f : craft.Progress);
-        Fill(pickupBar, gather == null ? 0f : gather.Progress);
+        if (!on)
+        {
+            lastFill = 0f;
+            mashPulseTimer = 0f;
+            interactRing.transform.localScale = Vector3.one;
+            return;
+        }
+
+        float part = trap
+            ? currentProgress / Mathf.Max(maxProgressBarWolfTrapProgress, 0.0001f)
+            : wood ? gather.Progress : craft.Progress;
+
+        bool lacking = fire && !craft.HasWood;
+        Color tone = trap ? ringTrap : lacking ? ringShort : wood ? ringWood : ringFire;
+
+        Beat(trap);
+
+        if (interactKey != null)
+        {
+            interactKey.text = trap ? "F" : wood ? "E" : "A";
+            interactKey.color = tone;
+        }
+
+        if (interactCount != null)
+        {
+            interactCount.text = trap ? "" : wood ? "+" + gather.Gain : craft.Cost + " bois";
+            interactCount.color = tone;
+        }
+
+        if (interactTrack != null)
+        {
+            Color track = tone;
+            track.a = 0.30f;
+            interactTrack.color = track;
+        }
+
+        if (interactFill != null)
+        {
+            interactFill.fillAmount = part;
+            interactFill.color = part < lastFill ? ringDrop : tone;
+        }
+
+        lastFill = part;
+    }
+
+    // Un remplissage lisse dit "maintiens". Pour le piege il faut marteler : l'anneau bat.
+    private void Beat(bool trap)
+    {
+        if (!trap)
+        {
+            mashPulseTimer = 0f;
+            interactRing.transform.localScale = Vector3.one;
+            return;
+        }
+
+        mashPulseTimer += Time.deltaTime;
+
+        float t = (mashPulseTimer % Mathf.Max(mashPulseDuration, 0.01f)) / Mathf.Max(mashPulseDuration, 0.01f);
+        float scale = 1f + (mashPulseScale - 1f) * (1f - t) * (1f - t);
+
+        interactRing.transform.localScale = new Vector3(scale, scale, 1f);
+    }
+
+    private void UpdateWoodGain()
+    {
+        if (woodGain == null || Inventory.Instance == null) return;
+
+        int wood = Inventory.Instance.Wood;
+
+        if (!woodReady) { lastWood = wood; woodReady = true; }
+
+        if (wood > lastWood)
+        {
+            woodGain.text = "+" + (wood - lastWood);
+            woodGainLeft = woodGainTime;
+        }
+
+        lastWood = wood;
+
+        bool show = woodGainLeft > 0f;
+
+        if (woodGain.gameObject.activeSelf != show) woodGain.gameObject.SetActive(show);
+
+        if (!show) return;
+
+        woodGainLeft -= Time.deltaTime;
+
+        float k = 1f - Mathf.Clamp01(woodGainLeft / Mathf.Max(woodGainTime, 0.01f));
+
+        Color c = woodGain.color;
+        c.a = 1f - k * k;
+        woodGain.color = c;
+
+        woodGain.rectTransform.anchoredPosition = woodGainHome + Vector2.up * (woodGainRise * k);
     }
 
     private void UpdateDeathScreen()
@@ -461,13 +524,6 @@ public class HUD : MonoBehaviour
     {
         isRunning = false;
         isWolfTrapTriggered = false;
-
-        if (progressBarWolfTrap != null && progressBarWolfTrap.gameObject.activeSelf)
-            progressBarWolfTrap.gameObject.SetActive(false);
-
-        if (mashRing != null && mashRing.gameObject.activeSelf)
-            mashRing.gameObject.SetActive(false);
-
         mashPulseTimer = 0f;
     }
 
@@ -487,17 +543,6 @@ public class HUD : MonoBehaviour
         ghost.anchorMax = edge;
         ghost.offsetMin = Vector2.zero;
         ghost.offsetMax = Vector2.zero;
-    }
-
-    private void Fill(Image bar, float part)
-    {
-        if (bar == null) return;
-
-        showBar = part > 0.001f;
-
-        if (bar.gameObject.activeSelf != showBar) bar.gameObject.SetActive(showBar);
-
-        bar.fillAmount = part;
     }
 
     private void OnWolfTrapActivated()

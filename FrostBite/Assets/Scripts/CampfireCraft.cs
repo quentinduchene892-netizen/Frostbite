@@ -16,6 +16,16 @@ public class CampfireCraft : MonoBehaviour
     [SerializeField] float lift = 0.02f;
     [SerializeField] float nose = 0.35f;
     [SerializeField] LayerMask ground = ~0;
+    [Tooltip("Ecart d'angle tolere entre le regard et le foyer pour considerer qu'on le vise. "
+        + "Sert a l'invite : le rayon du CampfireSpot, lui, couvre toute la clairiere.")]
+    [SerializeField] float lookAngle = 20f;
+
+    [Header("Fantome")]
+    [SerializeField] Renderer ghostSkin;
+    [Tooltip("Teinte du repere quand la pose est possible.")]
+    [SerializeField] Color ghostReady = new Color(1f, 0.66f, 0.30f, 0.85f);
+    [Tooltip("Teinte du repere quand on vise le foyer sans assez de bois : le refus se lit dans le monde.")]
+    [SerializeField] Color ghostShort = new Color(0.88f, 0.25f, 0.18f, 0.45f);
 
     InputManager input;
     PlayerStat stat;
@@ -28,24 +38,34 @@ public class CampfireCraft : MonoBehaviour
     int count;
     int i;
     Vector3 aim;
+    CampfireSpot look;
     float progress;
     bool holding;
     bool ok;
     bool hasWood;
     bool wants;
     bool visible;
+    bool aimed;
 
     public float Progress => progress;
     public bool Building => holding;
     public bool Valid => ok;
     public bool Ready => ok && hasWood;
+    // Vrai seulement si le viseur est sur le foyer, contrairement a Valid qui couvre toute la clairiere.
+    public bool Aimed => aimed;
+    public bool HasWood => hasWood;
+    public int Cost => woodCost;
 
     void Awake()
     {
         if (ghost == null && ghostPrefab != null)
             ghost = Instantiate(ghostPrefab).transform;
 
-        if (ghost == null || firePrefab == null) return;
+        if (ghost == null) return;
+
+        if (ghostSkin == null) ghostSkin = ghost.GetComponentInChildren<Renderer>();
+
+        if (firePrefab == null) return;
 
         model = firePrefab.GetComponent<Campfire>();
 
@@ -87,6 +107,17 @@ public class CampfireCraft : MonoBehaviour
 
         if (view == null) return;
 
+        Look();
+
+        // Viser le foyer suffit. Allowed() ramenait de toute facon le feu sur le centre du foyer :
+        // le test de sol ne servait qu'a bloquer des poses qui n'existaient pas.
+        if (aimed)
+        {
+            aim = look.transform.position;
+            ok = true;
+            return;
+        }
+
         origin = view.transform.position + view.transform.forward * nose;
 
         if (Cast(origin, view.transform.forward, range))
@@ -103,6 +134,19 @@ public class CampfireCraft : MonoBehaviour
             aim = hit.point;
             ok = Allowed(hit.normal);
         }
+    }
+
+    // Le foyer n'a pas de collider : on ne peut pas le "toucher" au rayon. On mesure donc
+    // l'angle entre le regard et sa direction, ce qui reste vrai quelle que soit la distance.
+    void Look()
+    {
+        aimed = false;
+        look = CampfireSpot.Nearest(transform.position);
+
+        if (look == null || look.Lit) return;
+        if (Reach(look.transform.position) > range) return;
+
+        aimed = Vector3.Angle(view.transform.forward, look.transform.position - view.transform.position) <= lookAngle;
     }
 
     bool Allowed(Vector3 normal)
@@ -149,11 +193,16 @@ public class CampfireCraft : MonoBehaviour
     {
         if (ghost == null) return;
 
-        visible = ok && hasWood && (wants || progress > 0.001f);
+        // Le repere sort des qu'on vise le foyer : c'est avant d'appuyer qu'on a besoin de savoir ou ca tombe.
+        visible = aimed || (ok && hasWood && (wants || progress > 0.001f));
 
         if (ghost.gameObject.activeSelf != visible) ghost.gameObject.SetActive(visible);
 
-        if (visible) ghost.position = aim + Vector3.up * lift;
+        if (!visible) return;
+
+        ghost.position = aim + Vector3.up * lift;
+
+        if (ghostSkin != null) ghostSkin.material.color = hasWood ? ghostReady : ghostShort;
     }
 
     void Place()
