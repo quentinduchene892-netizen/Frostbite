@@ -42,6 +42,19 @@ public class HUD : MonoBehaviour
     [SerializeField] private float fillPerPressMax = 0.2f;
     [SerializeField] private float drainSpeed = 0.3f;
 
+    [Header("Endurance")]
+    [SerializeField] private CameraPlayer runner;
+    [SerializeField] private Slider staminaBar;
+    [SerializeField] private Image staminaFill;
+    [SerializeField] private RectTransform staminaGhost;
+    [SerializeField] private TMP_Text staminaLabel;
+    [SerializeField] private TMP_Text staminaValue;
+    [Tooltip("Repere du seuil a partir duquel la course redevient possible apres un essoufflement.")]
+    [SerializeField] private RectTransform staminaRestMark;
+    [SerializeField] private Color staminaFull = new Color(0.45f, 0.72f, 0.42f, 1f);
+    [SerializeField] private Color staminaLow = new Color(0.85f, 0.55f, 0.18f, 1f);
+    [SerializeField] private Color staminaSpent = new Color(0.88f, 0.22f, 0.16f, 1f);
+
     [Header("Mash Ring (indicateur de spam)")]
     [Tooltip("RectTransform de l'anneau qui pulse pour indiquer qu'il faut spam la touche.")]
     [SerializeField] private RectTransform mashRing;
@@ -64,6 +77,9 @@ public class HUD : MonoBehaviour
     public bool isWolfTrapActivated = false;
 
     private float stressGhostPart;
+    private float staminaGhostPart;
+    private string staminaTitle;
+    private Color staminaTint;
     private float coldGhostPart;
     private float currentProgress;
     private float stressPart;
@@ -87,6 +103,15 @@ public class HUD : MonoBehaviour
         if (craft == null) craft = FindFirstObjectByType<CampfireCraft>();
         if (gather == null) gather = FindFirstObjectByType<WoodGather>();
         if (storm == null) storm = FindFirstObjectByType<WindStorm>();
+        if (runner == null) runner = FindFirstObjectByType<CameraPlayer>();
+
+        if (staminaLabel != null)
+        {
+            staminaTitle = staminaLabel.text;
+            staminaTint = staminaLabel.color;
+        }
+
+        PlaceRestMark();
 
         if (hintText != null) hintText.gameObject.SetActive(false);
 
@@ -121,6 +146,7 @@ public class HUD : MonoBehaviour
         if (alertText != null && alertText.activeSelf != isRunning) alertText.SetActive(isRunning);
 
         UpdateStatBars();
+        UpdateStamina();
         UpdateCraft();
         UpdateDeathScreen();
         UpdateShelterHint();
@@ -264,6 +290,57 @@ public class HUD : MonoBehaviour
         if (coldValue != null) coldValue.text = Mathf.RoundToInt(coldPart * 100f).ToString();
 
         UpdateColdTrend(PlayerStat.Instance.Cold);
+    }
+
+    // Le repere ne bouge jamais en jeu : il depend des reglages de course, pas de l'etat du joueur.
+    private void PlaceRestMark()
+    {
+        if (staminaRestMark == null || runner == null) return;
+
+        Vector2 min = staminaRestMark.anchorMin;
+        Vector2 max = staminaRestMark.anchorMax;
+        min.x = runner.RestPart;
+        max.x = runner.RestPart;
+        staminaRestMark.anchorMin = min;
+        staminaRestMark.anchorMax = max;
+        staminaRestMark.anchoredPosition = Vector2.zero;
+    }
+
+    private void UpdateStamina()
+    {
+        if (runner == null) return;
+
+        float part = runner.StaminaPart;
+        bool spent = runner.Tired;
+        float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 8f);
+
+        if (staminaBar != null) staminaBar.value = part;
+
+        staminaGhostPart = TrailTowards(staminaGhostPart, part);
+        SetGhost(staminaGhost, staminaGhostPart);
+
+        if (staminaFill != null)
+            staminaFill.color = spent
+                ? Color.Lerp(staminaSpent, Color.white, pulse * 0.5f)
+                : Color.Lerp(staminaLow, staminaFull, part);
+
+        if (staminaValue != null) staminaValue.text = Mathf.RoundToInt(part * 100f).ToString();
+
+        if (staminaLabel == null) return;
+
+        // Le libelle porte l'etat : une barre qui remonte sans dire pourquoi on ne repart pas ne suffit pas.
+        if (spent)
+        {
+            Color hot = Color.Lerp(staminaSpent, Color.white, pulse);
+            hot.a = 0.6f + 0.4f * pulse;
+            staminaLabel.text = "À BOUT";
+            staminaLabel.color = hot;
+        }
+        else
+        {
+            staminaLabel.text = staminaTitle;
+            staminaLabel.color = staminaTint;
+        }
     }
 
     private void UpdateFrozenWarning()

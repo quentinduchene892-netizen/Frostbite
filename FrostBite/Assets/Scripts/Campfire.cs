@@ -7,6 +7,8 @@ public class Campfire : MonoBehaviour
     [SerializeField] AudioSource fireAudio;
     [SerializeField] float radius = 5f;
     [SerializeField] float burnTime = 20f;
+    [Tooltip("Feu de decor qui ne s'eteint jamais : sert au menu principal, ou personne ne peut le recharger.")]
+    [SerializeField] bool infinite;
     [SerializeField] float warmRate = 3f;
     [SerializeField] float calmRate = 3.5f;
     [Tooltip("Vie rendue par seconde. Sans ca, les blessures par balle s'accumulent sans aucun recours.")]
@@ -47,7 +49,7 @@ public class Campfire : MonoBehaviour
     {
         if (!lit) return;
 
-        left -= Time.deltaTime;
+        if (!infinite) left -= Time.deltaTime;
 
         stat = PlayerStat.Instance;
         gap = stat != null ? Vector3.Distance(stat.transform.position, transform.position) : Mathf.Infinity;

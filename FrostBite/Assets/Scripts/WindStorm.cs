@@ -19,6 +19,12 @@ public class WindStorm : MonoBehaviour
     [SerializeField] float coldRate = 2.5f;
     [SerializeField] float stressRate = 2.5f;
 
+    [Header("Mode decor (menu)")]
+    [Tooltip("Tempete permanente jouee sans joueur : le menu principal n'a pas de PlayerStat.")]
+    [SerializeField] bool ambient;
+    [Tooltip("Point suivi par la neige en mode decor. Vide : la camera principale.")]
+    [SerializeField] Transform ambientAnchor;
+
     [Header("Abri sous les arbres")]
     [Tooltip("Part de la tempete annulee sous couvert dense.")]
     [Range(0f, 1f)] [SerializeField] float shelterStrength = 0.75f;
@@ -55,6 +61,7 @@ public class WindStorm : MonoBehaviour
     private float exposure = 1f;
 
     public float Power => power;
+    public bool Ambient => ambient;
     public bool Inside => inside;
     public float Exposure => exposure;
     public float Shelter => shelter;
@@ -117,7 +124,7 @@ public class WindStorm : MonoBehaviour
         Turn();
 
         stat = PlayerStat.Instance;
-        inside = stat != null && Covers(stat.transform.position);
+        inside = ambient || (stat != null && Covers(stat.transform.position));
         goal = on && inside ? 1f : 0f;
         power = Mathf.MoveTowards(power, goal, (goal > power ? rise : fall) * Time.deltaTime);
 
@@ -156,19 +163,29 @@ public class WindStorm : MonoBehaviour
         turnLeft = on ? Random.Range(blowMin, blowMax) : Random.Range(calmMin, calmMax);
     }
 
+    Transform Focus()
+    {
+        if (!ambient && stat != null) return stat.transform;
+        if (ambientAnchor != null) return ambientAnchor;
+
+        return sky != null ? sky.transform : transform;
+    }
+
     void Blow()
     {
-        if (stat == null) return;
+        Transform focus = Focus();
+
+        if (focus == null) return;
 
         if (hasSnow)
         {
-            snow.transform.position = stat.transform.position + Vector3.up * snowHeight;
+            snow.transform.position = focus.position + Vector3.up * snowHeight;
             snowEmission.rateOverTime = snowRate * power * exposure;
         }
 
         if (hasGust)
         {
-            gust.transform.position = stat.transform.position + Vector3.up * gustHeight;
+            gust.transform.position = focus.position + Vector3.up * gustHeight;
             gustEmission.rateOverTime = gustRate * power * exposure;
         }
     }
