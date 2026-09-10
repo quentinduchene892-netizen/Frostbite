@@ -6,6 +6,7 @@ TagManager:
   tags:
   - WolfTrap
   - Wood
+  - Ice
   layers:
   - Default
   - TransparentFX

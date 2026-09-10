@@ -12,13 +12,14 @@ public class SoundManager : MonoBehaviour
     [SerializeField] AudioClip hunterShoot;
     [Tooltip("Sifflement d'une balle qui passe pres du joueur. A defaut, le son de tir est reutilise.")]
     [SerializeField] AudioClip bulletWhiz;
-    [SerializeField] [Range(0f, 1f)] float whizVolume = 0.75f;
+    [SerializeField][Range(0f, 1f)] float whizVolume = 0.75f;
     [SerializeField] AudioClip pickup;
     [SerializeField] AudioClip craft;
     [SerializeField] AudioClip wolfTrapSnap;
     [SerializeField] AudioClip wolfTrapRelease;
     [SerializeField] AudioClip[] snowSteps;
     [SerializeField] AudioClip[] woodSteps;
+    [SerializeField] AudioClip[] iceSteps;
     [SerializeField] float sfxVolume = 1f;
     [SerializeField] float stepVolume = 0.6f;
     [SerializeField] float shotMinDistance = 20f;
@@ -75,9 +76,11 @@ public class SoundManager : MonoBehaviour
         PlayAt(wolfTrapRelease, position, sfxVolume);
     }
 
-    public void PlayFootstep(Vector3 position, bool onWood)
+    public void PlayFootstep(Vector3 position, bool onWood, bool onIce = false)
     {
-        PlayAt(Pick(onWood ? woodSteps : snowSteps), position, stepVolume);
+        AudioClip[] clips = onWood ? woodSteps : (onIce ? iceSteps : snowSteps);
+
+        PlayAt(Pick(clips), position, stepVolume);
     }
 
     public void SetBreathing(bool active)

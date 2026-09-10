@@ -48,6 +48,7 @@ public class CameraPlayer : MonoBehaviour
     [SerializeField] float shakeRoll = 5f;
     [SerializeField] float shakeRate = 34f;
     [SerializeField] string woodTag = "Wood";
+    [SerializeField] string iceTag = "Ice";
     [SerializeField] float footRay = 1.5f;
 
     [Header("Log Balance")]
@@ -102,6 +103,7 @@ public class CameraPlayer : MonoBehaviour
     bool onGround;
     bool trapped;
     bool onWood;
+    bool onIce;
     RaycastHit footHit;
 
     float logTilt;
@@ -367,9 +369,12 @@ public class CameraPlayer : MonoBehaviour
     {
         if (SoundManager.Instance == null) return;
 
-        onWood = Physics.Raycast(transform.position, Vector3.down, out footHit, footRay, ~0, QueryTriggerInteraction.Ignore) && footHit.collider.CompareTag(woodTag);
+        bool hit = Physics.Raycast(transform.position, Vector3.down, out footHit, footRay, ~0, QueryTriggerInteraction.Ignore);
 
-        SoundManager.Instance.PlayFootstep(transform.position, onWood);
+        onWood = hit && footHit.collider.CompareTag(woodTag);
+        onIce = hit && footHit.collider.CompareTag(iceTag);
+
+        SoundManager.Instance.PlayFootstep(transform.position, onWood, onIce);
     }
 
     void Breathe()
