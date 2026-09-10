@@ -14,6 +14,7 @@ public class InputManager : MonoBehaviour
     [SerializeField] string takeName = "Interact";
     [SerializeField] string craftKey = "<Keyboard>/#(a)";
     [SerializeField] string wolfTrap = "QTE";
+    [SerializeField] string helpMenuName = "HelpMenu";
 
     InputActionMap map;
     InputAction moveAction;
@@ -22,6 +23,7 @@ public class InputManager : MonoBehaviour
     InputAction takeAction;
     InputAction craftAction;
     InputAction wolfTrapAction;
+    InputAction helpMenuAction;
 
     public Vector2 Move => moveAction != null ? moveAction.ReadValue<Vector2>() : Vector2.zero;
     public Vector2 Look => lookAction != null ? lookAction.ReadValue<Vector2>() : Vector2.zero;
@@ -33,6 +35,8 @@ public class InputManager : MonoBehaviour
     public bool WolfTrapPressed => wolfTrapAction != null && wolfTrapAction.WasPressedThisFrame();
 
     public bool WolfTrapHeld => wolfTrapAction != null && wolfTrapAction.IsPressed();
+
+    public bool HelpMenuPressed => helpMenuAction != null && helpMenuAction.WasPressedThisFrame();
 
     void Awake()
     {
@@ -54,9 +58,13 @@ public class InputManager : MonoBehaviour
         runAction = map.FindAction(runName, false);
         takeAction = map.FindAction(takeName, false);
         wolfTrapAction = map.FindAction(wolfTrap, false);
+        helpMenuAction = map.FindAction(helpMenuName, false);
 
         if (wolfTrapAction == null)
             Debug.LogWarning($"InputManager : action '{wolfTrap}' introuvable dans la map '{mapName}'.", this);
+
+        if (helpMenuAction == null)
+            Debug.LogWarning($"InputManager : action '{helpMenuName}' introuvable dans la map '{mapName}'.", this);
     }
 
     void OnDestroy()

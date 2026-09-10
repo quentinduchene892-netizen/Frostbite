@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -49,6 +50,16 @@ public class HUD : MonoBehaviour
     [SerializeField] private float mashPulseMaxScale = 1.6f;
     [SerializeField] private Color mashRingColor = new Color(1f, 0.8f, 0.2f, 1f);
 
+    [Header("Menu Pause (slide)")]
+    [SerializeField] private RectTransform menuPanel;
+    [SerializeField] private Vector2 posVisible = new Vector2(0, 0);
+    [SerializeField] private Vector2 posCachee = new Vector2(-500, 0);
+    [SerializeField] private float dureeSlide = 0.3f;
+    [SerializeField] private AnimationCurve courbeSlide = AnimationCurve.EaseInOut(0, 0, 1, 1);
+
+    private bool menuOuvert = false;
+    private Coroutine slideCoroutine;
+
     public bool isWolfTrapTriggered = false;
     public bool isWolfTrapActivated = false;
 
@@ -96,10 +107,17 @@ public class HUD : MonoBehaviour
         if (mashRing != null) mashRing.gameObject.SetActive(false);
 
         if (alertText != null) alertText.SetActive(false);
+
+        if (menuPanel != null) menuPanel.anchoredPosition = posCachee;
     }
 
     void Update()
     {
+        if (InputManager.Instance != null && InputManager.Instance.HelpMenuPressed)
+        {
+            ToggleMenu();
+        }
+
         if (alertText != null && alertText.activeSelf != isRunning) alertText.SetActive(isRunning);
 
         UpdateStatBars();
@@ -143,6 +161,35 @@ public class HUD : MonoBehaviour
         isRunning = false;
         progressBarWolfTrap.gameObject.SetActive(false);
         OnWolfTrapActivated();
+    }
+
+    public void ToggleMenu()
+    {
+        menuOuvert = !menuOuvert;
+
+        if (slideCoroutine != null)
+            StopCoroutine(slideCoroutine);
+
+        Vector2 cible = menuOuvert ? posVisible : posCachee;
+        slideCoroutine = StartCoroutine(SlideMenuVers(cible));
+    }
+
+    private IEnumerator SlideMenuVers(Vector2 cible)
+    {
+        if (menuPanel == null) yield break;
+
+        Vector2 depart = menuPanel.anchoredPosition;
+        float temps = 0f;
+
+        while (temps < dureeSlide)
+        {
+            temps += Time.deltaTime;
+            float t = courbeSlide.Evaluate(temps / dureeSlide);
+            menuPanel.anchoredPosition = Vector2.Lerp(depart, cible, t);
+            yield return null;
+        }
+
+        menuPanel.anchoredPosition = cible;
     }
 
     public void StartWolfTrapQTE()
