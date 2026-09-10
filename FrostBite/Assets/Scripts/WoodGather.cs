@@ -5,17 +5,27 @@ public class WoodGather : MonoBehaviour
 {
     public static WoodGather Instance;
 
+    [SerializeField] Camera view;
+    [Tooltip("Portee du regard. Au-dela, la buche n'est plus ramassable meme si on la voit.")]
+    [SerializeField] float range = 3f;
+    [Tooltip("Epaisseur du rayon. Un rayon fin obligerait a centrer le viseur au pixel pres sur une buche minuscule.")]
+    [SerializeField] float aimRadius = 0.35f;
+    [SerializeField] float nose = 0.35f;
+    [SerializeField] LayerMask mask = ~0;
     [SerializeField] float gatherTime = 0.9f;
     [SerializeField] float dropSpeed = 2.5f;
 
     InputManager input;
     PlayerStat stat;
     WoodPickup target;
+    RaycastHit[] buffer = new RaycastHit[16];
+    Vector3 origin;
     float progress;
     bool holding;
 
     public float Progress => progress;
-    public bool Near => target != null;
+    public bool Aimed => target != null;
+    public int Gain => target != null ? target.Amount : 0;
 
     void Awake()
     {
@@ -27,21 +37,10 @@ public class WoodGather : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    public void Enter(WoodPickup pickup)
-    {
-        target = pickup;
-    }
-
-    public void Leave(WoodPickup pickup)
-    {
-        if (target != pickup) return;
-
-        target = null;
-        progress = 0f;
-    }
-
     void Update()
     {
+        Aim();
+
         if (target == null)
         {
             progress = 0f;
@@ -62,6 +61,38 @@ public class WoodGather : MonoBehaviour
         progress = Mathf.Clamp01(progress);
 
         if (progress >= 1f) Take();
+    }
+
+    void Aim()
+    {
+        if (view == null) view = Camera.main;
+
+        WoodPickup found = null;
+
+        if (view != null)
+        {
+            origin = view.transform.position + view.transform.forward * nose;
+
+            // Les buches ne portent que des colliders trigger : il faut les inclure dans le tir.
+            int count = Physics.SphereCastNonAlloc(origin, aimRadius, view.transform.forward, buffer, range, mask, QueryTriggerInteraction.Collide);
+            float best = float.MaxValue;
+
+            for (int i = 0; i < count; i++)
+            {
+                WoodPickup pickup = buffer[i].collider.GetComponentInParent<WoodPickup>();
+
+                if (pickup == null || buffer[i].distance >= best) continue;
+
+                best = buffer[i].distance;
+                found = pickup;
+            }
+        }
+
+        if (found == target) return;
+
+        // Changer de cible remet le compteur a zero : sinon on cumulerait sur deux buches.
+        target = found;
+        progress = 0f;
     }
 
     void Take()
