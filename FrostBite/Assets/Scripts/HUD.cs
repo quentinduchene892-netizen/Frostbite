@@ -41,6 +41,14 @@ public class HUD : MonoBehaviour
     [SerializeField] private float fillPerPressMax = 0.2f;
     [SerializeField] private float drainSpeed = 0.3f;
 
+    [Header("Mash Ring (indicateur de spam)")]
+    [Tooltip("RectTransform de l'anneau qui pulse pour indiquer qu'il faut spam la touche.")]
+    [SerializeField] private RectTransform mashRing;
+    [SerializeField] private Image mashRingImage;
+    [SerializeField] private float mashPulseDuration = 0.5f;
+    [SerializeField] private float mashPulseMaxScale = 1.6f;
+    [SerializeField] private Color mashRingColor = new Color(1f, 0.8f, 0.2f, 1f);
+
     public bool isWolfTrapTriggered = false;
     public bool isWolfTrapActivated = false;
 
@@ -61,6 +69,7 @@ public class HUD : MonoBehaviour
     private bool coldColorSaved;
     private bool showDeath;
     private Vector2 edge;
+    private float mashPulseTimer;
 
     void Start()
     {
@@ -83,6 +92,8 @@ public class HUD : MonoBehaviour
         }
 
         progressBarWolfTrap.gameObject.SetActive(false);
+
+        if (mashRing != null) mashRing.gameObject.SetActive(false);
 
         if (alertText != null) alertText.SetActive(false);
     }
@@ -110,7 +121,11 @@ public class HUD : MonoBehaviour
             StartWolfTrapQTE();
         }
 
-        if (!isRunning) return;
+        if (!isRunning)
+        {
+            UpdateMashRing();
+            return;
+        }
 
         currentProgress -= drainSpeed * Time.deltaTime;
 
@@ -120,6 +135,7 @@ public class HUD : MonoBehaviour
         currentProgress = Mathf.Clamp(currentProgress, 0f, maxProgressBarWolfTrapProgress);
 
         UpdateProgressBar();
+        UpdateMashRing();
 
         if (currentProgress < maxProgressBarWolfTrapProgress) return;
 
@@ -143,6 +159,37 @@ public class HUD : MonoBehaviour
         if (progressBarWolfTrap == null || maxProgressBarWolfTrapProgress <= 0f) return;
 
         progressBarWolfTrap.fillAmount = currentProgress / maxProgressBarWolfTrapProgress;
+    }
+
+    private void UpdateMashRing()
+    {
+        if (mashRing == null) return;
+
+        bool shouldShow = isRunning;
+
+        if (mashRing.gameObject.activeSelf != shouldShow)
+            mashRing.gameObject.SetActive(shouldShow);
+
+        if (!shouldShow)
+        {
+            mashPulseTimer = 0f;
+            return;
+        }
+
+        mashPulseTimer += Time.deltaTime;
+
+        // Boucle sur la durée d'un pulse
+        float t = (mashPulseTimer % mashPulseDuration) / mashPulseDuration;
+
+        float scale = Mathf.Lerp(1f, mashPulseMaxScale, t);
+        mashRing.localScale = new Vector3(scale, scale, 1f);
+
+        if (mashRingImage != null)
+        {
+            Color c = mashRingColor;
+            c.a = Mathf.Lerp(mashRingColor.a, 0f, t); // fade out en grandissant
+            mashRingImage.color = c;
+        }
     }
 
     private void UpdateStatBars()
@@ -293,6 +340,11 @@ public class HUD : MonoBehaviour
 
         if (progressBarWolfTrap != null && progressBarWolfTrap.gameObject.activeSelf)
             progressBarWolfTrap.gameObject.SetActive(false);
+
+        if (mashRing != null && mashRing.gameObject.activeSelf)
+            mashRing.gameObject.SetActive(false);
+
+        mashPulseTimer = 0f;
     }
 
     private float TrailTowards(float ghost, float target)
