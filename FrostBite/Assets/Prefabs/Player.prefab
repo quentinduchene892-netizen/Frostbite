@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 6177436797677242013}
   - component: {fileID: 93062687781029896}
   - component: {fileID: 7078413267730586261}
-  - component: {fileID: 8295216979644755793}
+  - component: {fileID: 3620039021729796453}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -149,7 +149,7 @@ MonoBehaviour:
   maxStress: 100
   maxCold: 100
   life: 100
-  stress: 0
+  stress: 90
   cold: 0
   calmRate: 0.2
   coldRate: 0.35
@@ -234,7 +234,7 @@ MonoBehaviour:
   smooth: 4
   minIntensity: 0
   maxIntensity: 0.5
---- !u!114 &8295216979644755793
+--- !u!114 &3620039021729796453
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

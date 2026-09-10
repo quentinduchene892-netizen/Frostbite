@@ -2271,11 +2271,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 275154145082379081, guid: a3054e0ec793ff74495f1fa3d37b2eec, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 42.75
+      value: 23.789999
       objectReference: {fileID: 0}
     - target: {fileID: 275154145082379081, guid: a3054e0ec793ff74495f1fa3d37b2eec, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -222
+      value: 92.36
       objectReference: {fileID: 0}
     - target: {fileID: 275154145082379081, guid: a3054e0ec793ff74495f1fa3d37b2eec, type: 3}
       propertyPath: m_LocalRotation.w
@@ -16677,7 +16677,7 @@ Transform:
   m_GameObject: {fileID: 826114255}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 6, y: 42.75, z: -222}
+  m_LocalPosition: {x: 6, y: 23.789999, z: 92.36}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -22942,61 +22942,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7537738161112564834, guid: 6cde874636b9b4b408b02f8ca9e00bb6, type: 3}
   m_PrefabInstance: {fileID: 1173422981}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1177462729 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 31641029782447786, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
-  m_PrefabInstance: {fileID: 1922293363}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1177462731
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1177462729}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4164ff6f4e78e374d95007f0563df37e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::StressEffects
-  volume: {fileID: 36906302}
-  cam: {fileID: 1177462732}
-  calmBand: 0.25
-  tensionBand: 0.5
-  panicBand: 0.7
-  collapseBand: 0.85
-  heartClip: {fileID: 8300000, guid: ef2001fe19c64e64a93a12d09f2853e9, type: 3}
-  bpmCalm: 60
-  bpmMax: 150
-  beatVolume: 0.55
-  breathClip: {fileID: 8300000, guid: d476b8acf69cbc24c943d2937e83b998, type: 3}
-  breathVolume: 0.5
-  coldVignette: 1
-  stressVignette: 0.55
-  pulseVignette: 0.18
-  vignetteSmooth: 4
-  cutoffOpen: 22000
-  cutoffChoked: 900
-  ghostSteps:
-  - {fileID: 8300000, guid: ea6446c14eed0db42be87ad053ff602b, type: 3}
-  - {fileID: 8300000, guid: 732967da13ebb0e46876976d5facd77e, type: 3}
-  - {fileID: 8300000, guid: 1973bbf1a8c7caf4bb98fc8640bf4324, type: 3}
-  - {fileID: 8300000, guid: 382cc5f522ff79d4bae0d3f04c5863df, type: 3}
-  ghostMinDelay: 4
-  ghostMaxDelay: 12
-  blackoutFrom: 0.95
-  blackoutTime: 0.2
---- !u!114 &1177462732 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8681800783107664290, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
-  m_PrefabInstance: {fileID: 1922293363}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1177462729}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07efe810f4dd5be45a6a92d73abaac92, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CameraPlayer
 --- !u!1001 &1203936369
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -37394,13 +37339,13 @@ PrefabInstance:
       propertyPath: view
       value: 
       objectReference: {fileID: 826114256}
+    - target: {fileID: 3620039021729796453, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
+      propertyPath: volume
+      value: 
+      objectReference: {fileID: 36906302}
     - target: {fileID: 3985843512759883672, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
-      propertyPath: freezeHit
-      value: 20
-      objectReference: {fileID: 0}
-    - target: {fileID: 3985843512759883672, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
-      propertyPath: gunshotDamage
-      value: 100
+      propertyPath: stress
+      value: 95
       objectReference: {fileID: 0}
     - target: {fileID: 5768293399581146651, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
       propertyPath: m_LocalPosition.x
@@ -37408,11 +37353,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5768293399581146651, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 41.1
+      value: 22.14
       objectReference: {fileID: 0}
     - target: {fileID: 5768293399581146651, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -222
+      value: 92.36
       objectReference: {fileID: 0}
     - target: {fileID: 5768293399581146651, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
       propertyPath: m_LocalRotation.w
@@ -37446,14 +37391,6 @@ PrefabInstance:
       propertyPath: volume
       value: 
       objectReference: {fileID: 36906302}
-    - target: {fileID: 7078413267730586261, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7078413267730586261, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
-      propertyPath: maxIntensity
-      value: 0.5
-      objectReference: {fileID: 0}
     - target: {fileID: 8681800783107664290, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
       propertyPath: vcam
       value: 
@@ -37466,17 +37403,10 @@ PrefabInstance:
       propertyPath: recomposer
       value: 
       objectReference: {fileID: 88291715}
-    - target: {fileID: 8681800783107664290, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
-      propertyPath: logInvertControls
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 31641029782447786, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1177462731}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
 --- !u!4 &1922293364 stripped
 Transform:
