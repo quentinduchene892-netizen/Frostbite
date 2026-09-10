@@ -51,6 +51,8 @@ MonoBehaviour:
   forestAmbiance: {fileID: 8300000, guid: 47e27cf47b618f84f9dd5eb465a251dc, type: 3}
   breathing: {fileID: 8300000, guid: d476b8acf69cbc24c943d2937e83b998, type: 3}
   hunterShoot: {fileID: 8300000, guid: d88094d6da18f58419b482bbffb4ed8a, type: 3}
+  bulletWhiz: {fileID: 0}
+  whizVolume: 0.75
   pickup: {fileID: 8300000, guid: 9f93447bdacfe9445a8a69ece124dd63, type: 3}
   craft: {fileID: 8300000, guid: b58474f7657b3804398b55322fc16c84, type: 3}
   wolfTrapSnap: {fileID: 8300000, guid: e9737797ca9b7ed40833211ed6a14914, type: 3}
@@ -65,8 +67,17 @@ MonoBehaviour:
   - {fileID: 8300000, guid: b11f3689b6732f849beeb460eee5d09f, type: 3}
   - {fileID: 8300000, guid: 6f1daeec51ebe09469e30dd57c4fc5bb, type: 3}
   - {fileID: 8300000, guid: 23bdd691c9c100b4d88395eee0c4c1ed, type: 3}
+  iceSteps: []
   sfxVolume: 1
   stepVolume: 0.6
+  shotMinDistance: 20
+  shotMaxDistance: 160
+  wolfHowl: {fileID: 8300000, guid: 07308a69545fc4d46a4fae33909b2497, type: 3}
+  wolfHowlMinInterval: 30
+  wolfHowlMaxInterval: 120
+  wolfHowlVolume: 0.5
+  wolfMinDistance: 20
+  wolfMaxDistance: 160
 --- !u!82 &8399341117151272598
 AudioSource:
   m_ObjectHideFlags: 0

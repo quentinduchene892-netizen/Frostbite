@@ -25,20 +25,44 @@ public class SoundManager : MonoBehaviour
     [SerializeField] float shotMinDistance = 20f;
     [SerializeField] float shotMaxDistance = 160f;
 
+    [Header("Hurlement de loup")]
+    [SerializeField] AudioClip wolfHowl;
+    [SerializeField] float wolfHowlMinInterval = 10f;
+    [SerializeField] float wolfHowlMaxInterval = 40f;
+    [SerializeField] float wolfHowlVolume = 1f;
+    [SerializeField] float wolfMinDistance = 20f;
+    [SerializeField] float wolfMaxDistance = 160f;
+
     int pick;
     bool breathingOn;
     GameObject shotObject;
     AudioSource shotSource;
+    float wolfHowlTimer;
 
     void Awake()
     {
         Instance = this;
+
+        ResetWolfHowlTimer();
 
         if (ambientSource == null || forestAmbiance == null) return;
 
         ambientSource.clip = forestAmbiance;
         ambientSource.loop = true;
         ambientSource.Play();
+    }
+
+    void Update()
+    {
+        if (wolfHowl == null) return;
+
+        wolfHowlTimer -= Time.deltaTime;
+
+        if (wolfHowlTimer <= 0f)
+        {
+            PlayWolfHowl();
+            ResetWolfHowlTimer();
+        }
     }
 
     void OnDestroy()
@@ -81,6 +105,17 @@ public class SoundManager : MonoBehaviour
         AudioClip[] clips = onWood ? woodSteps : (onIce ? iceSteps : snowSteps);
 
         PlayAt(Pick(clips), position, stepVolume);
+    }
+
+    public void PlayWolfHowl()
+    {
+        Vector3 position = Camera.main != null ? Camera.main.transform.position : transform.position;
+        PlayFar(wolfHowl, position, wolfHowlVolume, wolfMinDistance, wolfMaxDistance);
+    }
+
+    void ResetWolfHowlTimer()
+    {
+        wolfHowlTimer = Random.Range(wolfHowlMinInterval, wolfHowlMaxInterval);
     }
 
     public void SetBreathing(bool active)
