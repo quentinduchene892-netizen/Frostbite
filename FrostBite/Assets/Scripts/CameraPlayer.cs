@@ -119,7 +119,6 @@ public class CameraPlayer : MonoBehaviour
     public bool Running => running;
     public float Stamina => stamina;
     public float StaminaPart => sprintTime > 0f ? Mathf.Clamp01(stamina / sprintTime) : 0f;
-    // Part de jauge a regagner avant de pouvoir repartir apres un essoufflement.
     public float RestPart => sprintTime > 0f ? Mathf.Clamp01(restNeed / sprintTime) : 0f;
     public bool Tired => tired;
     public bool Trapped => trapped;

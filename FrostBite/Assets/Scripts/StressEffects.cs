@@ -35,6 +35,9 @@ public class StressEffects : MonoBehaviour
     [SerializeField] Color coldTint = new Color(0.58f, 0.89f, 1f);
     [SerializeField] Color stressTint = new Color(0.12f, 0.01f, 0.01f);
     [Range(0f, 1f)][SerializeField] float vignetteMax = 0.7f;
+    [Tooltip("Part de stress au-dela de laquelle la vignette cesse de se refermer. La teinte, elle, continue de virer : "
+        + "passe ce seuil on garde l'ouverture telle quelle au lieu de finir sur un trou d'epingle.")]
+    [Range(0f, 1f)][SerializeField] float vignetteHoldFrom = 0.60f;
     [SerializeField] float smoothCalm = 0.7f;
     [SerializeField] float smoothPanic = 0.5f;
     [SerializeField] bool roundedVignette = true;
@@ -56,6 +59,16 @@ public class StressEffects : MonoBehaviour
     [SerializeField] float ghostMinDelay = 4f;
     [SerializeField] float ghostMaxDelay = 12f;
 
+    [Header("Chaleur du feu")]
+    [Tooltip("Teinte prise par l'image quand on se tient dans le rayon d'un feu allume.")]
+    [SerializeField] Color fireTint = new Color(1f, 0.70f, 0.42f);
+    [Tooltip("Force de la teinte chaude, 0 pour la desactiver.")]
+    [Range(0f, 1f)] [SerializeField] float fireWarmth = 0.45f;
+    [Tooltip("Part de la vignette de froid effacee au plus pres des flammes.")]
+    [Range(0f, 1f)] [SerializeField] float fireRelief = 0.65f;
+    [Tooltip("Vitesse d'apparition et de disparition de la chaleur.")]
+    [SerializeField] float fireSmooth = 1.8f;
+
     [Header("Micro-blackouts")]
     [SerializeField] float blackoutFrom = 0.95f;
     [SerializeField] float blackoutTime = 0.2f;
@@ -74,6 +87,7 @@ public class StressEffects : MonoBehaviour
     AudioSource ghostSrc;
 
     readonly List<AudioLowPassFilter> ambience = new List<AudioLowPassFilter>();
+    readonly List<Campfire> fires = new List<Campfire>();
 
     float stress;
     float lastStress;
@@ -84,6 +98,7 @@ public class StressEffects : MonoBehaviour
     float blackoutTimer;
     float blackoutCooldown;
     float rescanTimer;
+    float warmth;
 
     void Awake()
     {
@@ -131,6 +146,9 @@ public class StressEffects : MonoBehaviour
 
     void CollectAmbience()
     {
+        fires.Clear();
+        fires.AddRange(FindObjectsByType<Campfire>(FindObjectsInactive.Exclude));
+
         ambience.Clear();
 
         foreach (var src in FindObjectsByType<AudioSource>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
@@ -159,6 +177,8 @@ public class StressEffects : MonoBehaviour
         float panic = Band(panicBand, collapseBand);
         float collapse = Band(collapseBand, 1f);
 
+        warmth = Mathf.MoveTowards(warmth, FireWarmth(), fireSmooth * Time.deltaTime);
+
         Pulse(panic, collapse);
         Grade(unease, tension, panic, collapse);
         Sound(unease, tension, collapse);
@@ -175,6 +195,27 @@ public class StressEffects : MonoBehaviour
         }
 
         lastStress = stress;
+    }
+
+    float FireWarmth()
+    {
+        var stat = PlayerStat.Instance;
+        if (stat == null) return 0f;
+
+        float best = 0f;
+
+        for (int i = 0; i < fires.Count; i++)
+        {
+            Campfire f = fires[i];
+            if (f == null || !f.Lit) continue;
+
+            float d = Vector3.Distance(f.transform.position, stat.transform.position);
+            float part = 1f - Mathf.Clamp01(d / Mathf.Max(f.Radius, 0.01f));
+
+            if (part > best) best = part;
+        }
+
+        return best;
     }
 
     float Band(float lo, float hi)
@@ -213,13 +254,21 @@ public class StressEffects : MonoBehaviour
             float coldWeight = PlayerStat.Instance.ColdPart * coldVignette;
             float stressWeight = Band(calmBand, 1f) * stressVignette;
 
-            vignetteCurrent = Mathf.Lerp(vignetteCurrent, coldWeight + stressWeight, vignetteSmooth * Time.deltaTime);
-            vignette.intensity.value = Mathf.Min(vignetteCurrent + pulse * pulseVignette * tension, vignetteMax);
+            float held = Mathf.Min(stress, vignetteHoldFrom);
+            float heldWeight = Mathf.InverseLerp(calmBand, 1f, held) * stressVignette;
+            float heldTension = Mathf.InverseLerp(tensionBand, panicBand, held);
+            float heldPanic = Mathf.InverseLerp(panicBand, collapseBand, held);
 
-            vignette.color.value = Color.Lerp(coldTint, stressTint,
+            vignetteCurrent = Mathf.Lerp(vignetteCurrent, coldWeight + heldWeight, vignetteSmooth * Time.deltaTime);
+
+            float serre = Mathf.Min(vignetteCurrent + pulse * pulseVignette * heldTension, vignetteMax);
+            vignette.intensity.value = serre * (1f - warmth * fireRelief);
+
+            Color froid = Color.Lerp(coldTint, stressTint,
                 stressWeight / Mathf.Max(coldWeight + stressWeight, 0.001f));
+            vignette.color.value = Color.Lerp(froid, fireTint, warmth);
 
-            vignette.smoothness.value = Mathf.Lerp(smoothCalm, smoothPanic, panic);
+            vignette.smoothness.value = Mathf.Lerp(smoothCalm, smoothPanic, heldPanic);
             vignette.rounded.value = roundedVignette;
         }
 
@@ -230,7 +279,10 @@ public class StressEffects : MonoBehaviour
             grain.intensity.value = Mathf.Clamp01(unease * 0.15f + tension * 0.35f);
 
         if (color != null)
-            color.saturation.value = -(unease * 10f + tension * 25f + panic * 20f + collapse * 45f);
+        {
+            color.saturation.value = -(unease * 10f + tension * 25f + panic * 20f + collapse * 45f) + warmth * 25f;
+            color.colorFilter.value = Color.Lerp(Color.white, fireTint, warmth * fireWarmth);
+        }
 
         if (lens != null)
             lens.intensity.value = -pulse * Mathf.Max(tension * 0.4f, panic) * pulseDistort;
@@ -297,7 +349,11 @@ public class StressEffects : MonoBehaviour
         foreach (var filter in ambience)
             if (filter != null) filter.cutoffFrequency = cutoffOpen;
 
-        if (color != null) color.postExposure.value = 0f;
+        if (color != null)
+        {
+            color.postExposure.value = 0f;
+            color.colorFilter.value = Color.white;
+        }
     }
 }
 

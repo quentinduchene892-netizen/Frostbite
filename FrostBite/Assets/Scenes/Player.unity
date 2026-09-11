@@ -1936,6 +1936,18 @@ PrefabInstance:
       propertyPath: view
       value: 
       objectReference: {fileID: 800893765}
+    - target: {fileID: 142467757807269064, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
+      propertyPath: m_Height
+      value: 1.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 142467757807269064, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
+      propertyPath: m_Center.y
+      value: 0.85
+      objectReference: {fileID: 0}
+    - target: {fileID: 3620039021729796453, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
+      propertyPath: volume
+      value: 
+      objectReference: {fileID: 1174755652}
     - target: {fileID: 3985843512759883672, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
       propertyPath: stress
       value: 0
@@ -2016,7 +2028,8 @@ PrefabInstance:
       propertyPath: recomposer
       value: 
       objectReference: {fileID: 706037025}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 7078413267730586261, guid: 3d3efec018302fa49bc6ac1c4aa22b58, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

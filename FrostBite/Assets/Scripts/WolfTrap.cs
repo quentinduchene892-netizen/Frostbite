@@ -6,6 +6,19 @@ public class WolfTrap : MonoBehaviour
     [SerializeField] private string playerTag = "Player";
     [SerializeField] private float stressOnTrap = 20f;
 
+    private static HUD shared;
+
+    private HUD Screen
+    {
+        get
+        {
+            if (hud != null) return hud;
+            if (shared == null) shared = FindAnyObjectByType<HUD>();
+
+            return shared;
+        }
+    }
+
     private GameObject trappedPlayer;
     private CameraPlayer view;
     private CharacterController controller;
@@ -21,9 +34,19 @@ public class WolfTrap : MonoBehaviour
         TrapPlayer(other.gameObject);
     }
 
+    private void Awake()
+    {
+        if (Screen == null)
+            Debug.LogError("WolfTrap : aucun HUD dans la scene, le joueur pris ne pourra pas se degager.", this);
+    }
+
     private void Update()
     {
-        if (!playerTrapped || hud == null || !hud.isWolfTrapActivated) return;
+        if (!playerTrapped) return;
+
+        HUD screen = Screen;
+
+        if (screen == null || !screen.isWolfTrapActivated) return;
 
         ReleasePlayer();
     }
@@ -41,7 +64,7 @@ public class WolfTrap : MonoBehaviour
 
         CenterPlayerOnTrap(player);
 
-        if (hud != null) hud.isWolfTrapTriggered = true;
+        if (Screen != null) Screen.isWolfTrapTriggered = true;
     }
 
     private void CenterPlayerOnTrap(GameObject player)
@@ -68,6 +91,6 @@ public class WolfTrap : MonoBehaviour
         playerTrapped = false;
         trappedPlayer = null;
 
-        if (hud != null) hud.isWolfTrapActivated = false;
+        if (Screen != null) Screen.isWolfTrapActivated = false;
     }
 }

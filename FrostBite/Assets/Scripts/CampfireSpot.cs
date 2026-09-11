@@ -19,8 +19,12 @@ public class CampfireSpot : MonoBehaviour
     [SerializeField] private Vector2 lifetimeNear = new Vector2(5f, 8f);
     [SerializeField] private Vector2 lifetimeFar = new Vector2(14f, 18f);
 
+    private static CampfireSpot beacon;
+    private static int beaconFrame = -1;
+
     private bool everLit;
     private bool spent;
+    private bool beaconOn;
 
     public float Radius => radius;
     public bool Lit => fire != null && fire.Lit;
@@ -100,15 +104,49 @@ public class CampfireSpot : MonoBehaviour
         SetSmokeActive(false);
     }
 
+    private static void PickBeacon()
+    {
+        if (beaconFrame == Time.frameCount) return;
+
+        beaconFrame = Time.frameCount;
+        beacon = null;
+
+        var stat = PlayerStat.Instance;
+        if (stat == null) return;
+
+        float best = float.MaxValue;
+
+        for (int i = 0; i < spots.Count; i++)
+        {
+            CampfireSpot s = spots[i];
+
+            if (s == null || s.Lit || s.spent) continue;
+
+            float d = (s.transform.position - stat.transform.position).sqrMagnitude;
+            if (d < best) { best = d; beacon = s; }
+        }
+    }
+
     private void Update()
     {
         if (fire == null) return;
 
-        if (fire.Lit) { SetSmokeActive(false); return; }
+        if (fire.Lit) { SetSmokeActive(false); Beacon(false); return; }
 
-        if (everLit) { spent = true; SetSmokeActive(false); return; }
+        if (everLit) { spent = true; SetSmokeActive(false); Beacon(false); return; }
 
         SetSmokeActive(true);
+
+        PickBeacon();
+        Beacon(this == beacon);
+    }
+
+    private void Beacon(bool active)
+    {
+        if (active == beaconOn) return;
+
+        beaconOn = active;
+        SetBeacon(active);
     }
 
     private void OnDrawGizmosSelected()

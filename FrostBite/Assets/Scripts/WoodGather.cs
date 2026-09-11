@@ -73,7 +73,6 @@ public class WoodGather : MonoBehaviour
         {
             origin = view.transform.position + view.transform.forward * nose;
 
-            // Les buches ne portent que des colliders trigger : il faut les inclure dans le tir.
             int count = Physics.SphereCastNonAlloc(origin, aimRadius, view.transform.forward, buffer, range, mask, QueryTriggerInteraction.Collide);
             float best = float.MaxValue;
 
@@ -90,7 +89,6 @@ public class WoodGather : MonoBehaviour
 
         if (found == target) return;
 
-        // Changer de cible remet le compteur a zero : sinon on cumulerait sur deux buches.
         target = found;
         progress = 0f;
     }

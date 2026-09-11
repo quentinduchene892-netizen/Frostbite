@@ -15,7 +15,6 @@ GameObject:
   - component: {fileID: 4057843715335324704}
   - component: {fileID: 6177436797677242013}
   - component: {fileID: 93062687781029896}
-  - component: {fileID: 7078413267730586261}
   - component: {fileID: 3620039021729796453}
   m_Layer: 0
   m_Name: Player
@@ -58,13 +57,13 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 1.8
+  m_Height: 1.7
   m_Radius: 0.3
   m_SlopeLimit: 45
   m_StepOffset: 0.4
   m_SkinWidth: 0.03
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.9, z: 0}
+  m_Center: {x: 0, y: 0.85, z: 0}
 --- !u!114 &8681800783107664290
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -120,6 +119,7 @@ MonoBehaviour:
   shakeRoll: 5
   shakeRate: 34
   woodTag: Wood
+  iceTag: Ice
   footRay: 1.5
   logSpeedMultiplier: 0.55
   logLeanSpeedMin: 4
@@ -189,6 +189,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f403cac238c2db479d5569c3de57be0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WoodGather
+  view: {fileID: 0}
+  range: 3
+  aimRadius: 0.35
+  nose: 0.35
+  mask:
+    serializedVersion: 2
+    m_Bits: 4294967295
   gatherTime: 0.9
   dropSpeed: 2.5
 --- !u!114 &93062687781029896
@@ -218,22 +225,10 @@ MonoBehaviour:
   ground:
     serializedVersion: 2
     m_Bits: 4294967295
---- !u!114 &7078413267730586261
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 31641029782447786}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1838820344481004d824f8d1b2a95777, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ColdVignette
-  volume: {fileID: 0}
-  smooth: 4
-  minIntensity: 0
-  maxIntensity: 0.5
+  lookAngle: 20
+  ghostSkin: {fileID: 0}
+  ghostReady: {r: 1, g: 0.66, b: 0.3, a: 0.85}
+  ghostShort: {r: 0.88, g: 0.25, b: 0.18, a: 0.45}
 --- !u!114 &3620039021729796453
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -267,6 +262,7 @@ MonoBehaviour:
   coldTint: {r: 0.58, g: 0.89, b: 1, a: 1}
   stressTint: {r: 0.12, g: 0.01, b: 0.01, a: 1}
   vignetteMax: 0.7
+  vignetteHoldFrom: 0.6
   smoothCalm: 0.7
   smoothPanic: 0.5
   roundedVignette: 1
@@ -283,6 +279,10 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 382cc5f522ff79d4bae0d3f04c5863df, type: 3}
   ghostMinDelay: 4
   ghostMaxDelay: 12
+  fireTint: {r: 1, g: 0.7, b: 0.42, a: 1}
+  fireWarmth: 0.45
+  fireRelief: 0.65
+  fireSmooth: 1.8
   blackoutFrom: 0.95
   blackoutTime: 0.2
 --- !u!1 &3682699508411479624

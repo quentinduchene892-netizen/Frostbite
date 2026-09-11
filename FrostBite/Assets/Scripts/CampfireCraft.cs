@@ -51,7 +51,6 @@ public class CampfireCraft : MonoBehaviour
     public bool Building => holding;
     public bool Valid => ok;
     public bool Ready => ok && hasWood;
-    // Vrai seulement si le viseur est sur le foyer, contrairement a Valid qui couvre toute la clairiere.
     public bool Aimed => aimed;
     public bool HasWood => hasWood;
     public int Cost => woodCost;
@@ -109,8 +108,6 @@ public class CampfireCraft : MonoBehaviour
 
         Look();
 
-        // Viser le foyer suffit. Allowed() ramenait de toute facon le feu sur le centre du foyer :
-        // le test de sol ne servait qu'a bloquer des poses qui n'existaient pas.
         if (aimed)
         {
             aim = look.transform.position;
@@ -136,8 +133,6 @@ public class CampfireCraft : MonoBehaviour
         }
     }
 
-    // Le foyer n'a pas de collider : on ne peut pas le "toucher" au rayon. On mesure donc
-    // l'angle entre le regard et sa direction, ce qui reste vrai quelle que soit la distance.
     void Look()
     {
         aimed = false;
@@ -193,7 +188,6 @@ public class CampfireCraft : MonoBehaviour
     {
         if (ghost == null) return;
 
-        // Le repere sort des qu'on vise le foyer : c'est avant d'appuyer qu'on a besoin de savoir ou ca tombe.
         visible = aimed || (ok && hasWood && (wants || progress > 0.001f));
 
         if (ghost.gameObject.activeSelf != visible) ghost.gameObject.SetActive(visible);

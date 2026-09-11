@@ -137,7 +137,6 @@ public class IntroCinematic : MonoBehaviour
         advance = false;
     }
 
-    // L'image suivante monte par-dessus l'ancienne : jamais de noir entre deux plans.
     IEnumerator Cross(Slide slide)
     {
         Show(back, slide);

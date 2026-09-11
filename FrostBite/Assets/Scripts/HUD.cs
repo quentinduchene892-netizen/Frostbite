@@ -185,7 +185,6 @@ public class HUD : MonoBehaviour
 
         isWolfTrapActivated = true;
         isRunning = false;
-        OnWolfTrapActivated();
     }
 
     public void StartWolfTrapQTE()
@@ -222,7 +221,6 @@ public class HUD : MonoBehaviour
         UpdateColdTrend(PlayerStat.Instance.Cold);
     }
 
-    // Le repere ne bouge jamais en jeu : il depend des reglages de course, pas de l'etat du joueur.
     private void PlaceRestMark()
     {
         if (staminaRestMark == null || runner == null) return;
@@ -258,7 +256,6 @@ public class HUD : MonoBehaviour
 
         if (staminaLabel == null) return;
 
-        // Le libelle porte l'etat : une barre qui remonte sans dire pourquoi on ne repart pas ne suffit pas.
         if (spent)
         {
             Color hot = Color.Lerp(staminaSpent, Color.white, pulse);
@@ -370,7 +367,6 @@ public class HUD : MonoBehaviour
 
         if (spawnPromptLeft > 0f)
         {
-            // Des que le joueur bouge, le rappel n'a plus rien a lui apprendre : il degage.
             if (InputManager.Instance != null && InputManager.Instance.Move.sqrMagnitude > 0.01f)
                 spawnPromptLeft = 0f;
             else
@@ -397,7 +393,6 @@ public class HUD : MonoBehaviour
     {
         if (interactRing == null) return;
 
-        // Le piege passe devant : on ne vise plus rien quand une machoire vous tient la jambe.
         bool trap = isRunning;
         bool wood = !trap && gather != null && gather.Aimed;
         bool fire = !trap && !wood && craft != null && craft.Aimed;
@@ -405,7 +400,6 @@ public class HUD : MonoBehaviour
 
         interactRing.alpha = Mathf.MoveTowards(interactRing.alpha, on ? 1f : 0f, 9f * Time.deltaTime);
 
-        // Le point de visee s'efface derriere l'anneau : deux reperes au meme endroit se genent.
         if (crosshair != null)
         {
             Color c = crossTint;
@@ -458,7 +452,6 @@ public class HUD : MonoBehaviour
         lastFill = part;
     }
 
-    // Un remplissage lisse dit "maintiens". Pour le piege il faut marteler : l'anneau bat.
     private void Beat(bool trap)
     {
         if (!trap)
@@ -543,10 +536,5 @@ public class HUD : MonoBehaviour
         ghost.anchorMax = edge;
         ghost.offsetMin = Vector2.zero;
         ghost.offsetMax = Vector2.zero;
-    }
-
-    private void OnWolfTrapActivated()
-    {
-        Debug.Log("Wolf Trap activé.");
     }
 }

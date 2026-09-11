@@ -149,5 +149,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c44943a9ad55b3a42b93c604d7cffee9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WoodPickup
-  amount: 10
-  playerTag: Player
+  amount: 1
