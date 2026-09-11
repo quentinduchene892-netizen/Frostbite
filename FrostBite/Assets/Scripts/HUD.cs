@@ -47,6 +47,8 @@ public class HUD : MonoBehaviour
     [SerializeField] private Color ringShort = new Color(0.88f, 0.28f, 0.20f, 1f);
     [Tooltip("Teinte du QTE du piege.")]
     [SerializeField] private Color ringTrap = new Color(1f, 0.80f, 0.20f, 1f);
+    [Tooltip("Teinte du point de fin de jeu.")]
+    [SerializeField] private Color ringEnd = new Color(0.70f, 0.55f, 0.95f, 1f);
 
     [Header("Gain de bois")]
     [Tooltip("Petit +N qui monte pres du compteur : sans lui le total saute en silence dans un coin.")]
@@ -396,7 +398,8 @@ public class HUD : MonoBehaviour
         bool trap = isRunning;
         bool wood = !trap && gather != null && gather.Aimed;
         bool fire = !trap && !wood && craft != null && craft.Aimed;
-        bool on = trap || wood || fire;
+        bool end = !trap && !wood && !fire && EndGather.Instance != null && EndGather.Instance.Aimed;
+        bool on = trap || wood || fire || end;
 
         interactRing.alpha = Mathf.MoveTowards(interactRing.alpha, on ? 1f : 0f, 9f * Time.deltaTime);
 
@@ -417,22 +420,22 @@ public class HUD : MonoBehaviour
 
         float part = trap
             ? currentProgress / Mathf.Max(maxProgressBarWolfTrapProgress, 0.0001f)
-            : wood ? gather.Progress : craft.Progress;
+            : wood ? gather.Progress : fire ? craft.Progress : EndGather.Instance.Progress;
 
         bool lacking = fire && !craft.HasWood;
-        Color tone = trap ? ringTrap : lacking ? ringShort : wood ? ringWood : ringFire;
+        Color tone = trap ? ringTrap : lacking ? ringShort : wood ? ringWood : fire ? ringFire : ringEnd;
 
         Beat(trap);
 
         if (interactKey != null)
         {
-            interactKey.text = trap ? "F" : wood ? "E" : "A";
+            interactKey.text = trap ? "F" : wood ? "E" : fire ? "A" : "E";
             interactKey.color = tone;
         }
 
         if (interactCount != null)
         {
-            interactCount.text = trap ? "" : wood ? "+" + gather.Gain : craft.Cost + " bois";
+            interactCount.text = trap ? "" : wood ? "+" + gather.Gain : fire ? craft.Cost + " bois" : "";
             interactCount.color = tone;
         }
 

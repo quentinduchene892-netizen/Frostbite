@@ -72,5 +72,7 @@ public class Bullet : MonoBehaviour
         if (PlayerStat.Instance == null) return;
         if (target == null) target = PlayerStat.Instance.GetComponent<CameraPlayer>();
         if (target != null) target.Kick(amount);
+
+        PlayerStat.Instance.AddStress(10);
     }
 }

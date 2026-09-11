@@ -52,6 +52,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Rock_rocher9
       objectReference: {fileID: 0}
+    - target: {fileID: 3451118302482216456, guid: 100cc5ec5658a6e4da4723deadbc2d19, type: 3}
+      propertyPath: m_Convex
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
